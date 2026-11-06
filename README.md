@@ -63,10 +63,11 @@ Changing a state appends to `history` automatically. Region ids and state ids in
 ## Develop
 
 ```bash
-npm install
-npm test          # logic and render tests under jsdom
-npm run build     # writes main.js
-./deploy.sh /path/to/vault
+make setup        # install and enable the git hooks
+make check        # format, lint, types, dead code, boundaries, layout, tests, build
+scripts/deploy.sh /path/to/vault
 ```
+
+Agents and contributors should read `AGENTS.md` first. The design is in `DESIGN.md` and current work is in `PROGRESS.md`.
 
 MIT licensed.

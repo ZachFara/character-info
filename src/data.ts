@@ -1,0 +1,213 @@
+// Pure logic with no Obsidian imports, so it can be tested without Obsidian.
+import type {
+	Frontmatter,
+	HistoryEntry,
+	PluginSettings,
+	Profile,
+	Region,
+	RegionData,
+	RegionPatch,
+	State,
+} from "./types.ts";
+
+const LIST_KEYS = ["doing", "fix", "links"] as const;
+/** Fields that are removed from the stored region when they end up empty. */
+const CLEARABLE = new Set<string>(["note", ...LIST_KEYS]);
+
+/** Local date as YYYY-MM-DD. */
+function today(d = new Date()): string {
+	const p = (n: number): string => String(n).padStart(2, "0");
+	return `${String(d.getFullYear())}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+export function slug(text: string): string {
+	return (
+		text
+			.toLowerCase()
+			.trim()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-+|-+$/g, "") || "item"
+	);
+}
+
+/** A slug not already in `taken`, adding -2, -3 ... as needed. */
+export function uniqueId(text: string, taken: string[]): string {
+	const base = slug(text);
+	let id = base;
+	for (let n = 2; taken.includes(id); n++) id = `${base}-${String(n)}`;
+	return id;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value)
+		? (value as Record<string, unknown>)
+		: {};
+}
+
+/** Frontmatter list values arrive as arrays, a single string, or nothing. */
+export function toList(value: unknown): string[] {
+	if (Array.isArray(value)) {
+		return (value as unknown[])
+			.filter((v): v is string | number => typeof v === "string" || typeof v === "number")
+			.map((v) => String(v).trim())
+			.filter(Boolean);
+	}
+	if (typeof value === "string") {
+		return value
+			.split("\n")
+			.map((v) => v.trim())
+			.filter(Boolean);
+	}
+	return [];
+}
+
+function toHistory(value: unknown): HistoryEntry[] {
+	if (!Array.isArray(value)) return [];
+	const out: HistoryEntry[] = [];
+	for (const item of value as unknown[]) {
+		const { date, from, to } = asRecord(item);
+		if (typeof date === "string" && typeof from === "string" && typeof to === "string") {
+			out.push({ date, from, to });
+		}
+	}
+	return out;
+}
+
+/** Region data as stored in the profile note, with every field defaulted. */
+export function readRegion(fm: Frontmatter | undefined, regionId: string): RegionData {
+	const r = asRecord(asRecord(fm?.regions)[regionId]);
+	return {
+		status: typeof r.status === "string" ? r.status : null,
+		note: typeof r.note === "string" ? r.note : "",
+		doing: toList(r.doing),
+		fix: toList(r.fix),
+		links: toList(r.links),
+		history: toHistory(r.history),
+	};
+}
+
+/** The profile's state for a stored status, falling back to the default state. */
+export function resolveState(profile: Profile, status: string | null): State {
+	const found =
+		profile.states.find((s) => s.id === status) ??
+		profile.states.find((s) => s.id === profile.defaultState) ??
+		profile.states[0];
+	if (!found) throw new Error(`Profile "${profile.name}" has no states`);
+	return found;
+}
+
+/** True when the stored status is set but is not one of the profile's states. */
+export function isUnknownStatus(profile: Profile, status: string | null): boolean {
+	return Boolean(status) && !profile.states.some((s) => s.id === status);
+}
+
+/** How many regions sit in each state, keyed by state id. */
+export function tally(profile: Profile, fm: Frontmatter | undefined): Record<string, number> {
+	const counts: Record<string, number> = Object.fromEntries(profile.states.map((s) => [s.id, 0]));
+	for (const region of profile.regions) {
+		const id = resolveState(profile, readRegion(fm, region.id).status).id;
+		counts[id] = (counts[id] ?? 0) + 1;
+	}
+	return counts;
+}
+
+/** The region to open first: the worst "bad" state, else the first region. */
+export function pickInitial(profile: Profile, fm: Frontmatter | undefined): string | null {
+	let best: { id: string; pips: number } | null = null;
+	for (const region of profile.regions) {
+		const s = resolveState(profile, readRegion(fm, region.id).status);
+		if (s.bad && (!best || s.pips < best.pips)) best = { id: region.id, pips: s.pips };
+	}
+	return best?.id ?? profile.regions[0]?.id ?? null;
+}
+
+function isEmpty(value: unknown): boolean {
+	return value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
+}
+
+/**
+ * Applies an edit to a frontmatter object in place.
+ * A status change appends { date, from, to } to the region's history.
+ * Empty fields are removed so the note stays tidy.
+ */
+export function applyEdit(
+	fm: Frontmatter,
+	profile: Profile,
+	regionId: string,
+	patch: RegionPatch,
+	date = today(),
+): Frontmatter {
+	const regions = asRecord(fm.regions);
+	const cur = asRecord(regions[regionId]);
+	const next: Record<string, unknown> = { ...cur };
+
+	if (patch.status !== undefined) {
+		const from = typeof cur.status === "string" ? cur.status : profile.defaultState;
+		if (patch.status !== from) {
+			next.history = [...toHistory(cur.history), { date, from, to: patch.status }];
+		}
+		next.status = patch.status;
+	}
+	if (patch.note !== undefined) next.note = patch.note.trim();
+	for (const key of LIST_KEYS) {
+		const value = patch[key];
+		if (value !== undefined) next[key] = toList(value);
+	}
+	const kept = Object.entries(next).filter(([key, value]) => !(CLEARABLE.has(key) && isEmpty(value)));
+	fm.regions = { ...regions, [regionId]: Object.fromEntries(kept) };
+	return fm;
+}
+
+/** Parses the `key: value` lines of a character-info code block. */
+export function parseBlock(source: string): Record<string, string> {
+	const out: Record<string, string> = {};
+	for (const line of source.split("\n")) {
+		const m = /^\s*([A-Za-z][\w-]*)\s*:\s*(.*?)\s*$/.exec(line);
+		if (m?.[1] !== undefined && m[2] !== undefined) {
+			out[m[1].toLowerCase()] = m[2].replace(/^["']|["']$/g, "");
+		}
+	}
+	return out;
+}
+
+function isState(v: unknown): v is State {
+	const r = asRecord(v);
+	return (
+		typeof r.id === "string" &&
+		typeof r.label === "string" &&
+		typeof r.color === "string" &&
+		typeof r.pips === "number" &&
+		typeof r.bad === "boolean"
+	);
+}
+
+function isRegion(v: unknown): v is Region {
+	const r = asRecord(v);
+	return typeof r.id === "string" && typeof r.name === "string";
+}
+
+function isProfile(v: unknown): v is Profile {
+	const r = asRecord(v);
+	return (
+		typeof r.id === "string" &&
+		typeof r.name === "string" &&
+		typeof r.map === "string" &&
+		typeof r.defaultState === "string" &&
+		typeof r.dataPath === "string" &&
+		Array.isArray(r.states) &&
+		(r.states as unknown[]).length > 0 &&
+		(r.states as unknown[]).every(isState) &&
+		Array.isArray(r.regions) &&
+		(r.regions as unknown[]).every(isRegion)
+	);
+}
+
+/** Reads saved plugin data, dropping anything malformed instead of trusting it. */
+export function normalizeSettings(raw: unknown): PluginSettings {
+	const r = asRecord(raw);
+	const profiles = Array.isArray(r.profiles) ? (r.profiles as unknown[]).filter(isProfile) : [];
+	return {
+		profiles,
+		defaultProfile: typeof r.defaultProfile === "string" ? r.defaultProfile : "",
+	};
+}

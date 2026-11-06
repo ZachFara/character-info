@@ -8,7 +8,7 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "node esbuild.config.mjs production",
-		"test": "node --test test/",
+		"test": "node --test \"test/**/*.test.ts\"",
 		"check": "make check",
 		"prepare": "git config core.hooksPath .githooks",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"

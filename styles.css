@@ -1,0 +1,88 @@
+/* Character Info. Colours come from each state, everything else from Obsidian's theme variables. */
+
+.character-info {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-l);
+	padding: var(--size-4-4);
+	background: var(--background-secondary);
+}
+
+.ci-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--size-4-2) var(--size-4-4);
+	padding-bottom: var(--size-4-3);
+	border-bottom: 1px solid var(--background-modifier-border);
+	margin-bottom: var(--size-4-4);
+}
+.ci-title {
+	margin: 0;
+	font-size: var(--font-ui-small);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+.ci-legend { display: flex; flex-wrap: wrap; gap: var(--size-4-1) var(--size-4-4); font-size: var(--font-ui-small); color: var(--text-muted); }
+.ci-legend .is-zero { opacity: 0.55; }
+.ci-legend b { color: var(--text-normal); margin-left: 2px; }
+
+.ci-dot {
+	display: inline-block;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	margin-right: 6px;
+	background: var(--ci-c, var(--text-faint));
+	vertical-align: baseline;
+}
+
+.ci-grid { display: grid; grid-template-columns: minmax(110px, 190px) 1fr; gap: var(--size-4-5); align-items: start; }
+@media (max-width: 560px) { .ci-grid { grid-template-columns: 1fr; } .ci-fig { max-width: 170px; margin: 0 auto; } }
+
+.ci-fig { margin: 0; text-align: center; }
+.ci-fig svg { width: 100%; height: auto; display: block; }
+.ci-fig figcaption { margin-top: var(--size-4-2); font-size: var(--font-ui-smaller); color: var(--text-faint); min-height: 1.2em; }
+.ci-silhouette { fill: var(--background-modifier-border); stroke: var(--background-modifier-border-hover); stroke-width: 1.5; }
+.ci-region { fill-opacity: 0.45; stroke-width: 1.5; cursor: pointer; transition: fill-opacity 0.12s; }
+.ci-region:hover { fill-opacity: 0.7; }
+.ci-region.is-sel { fill-opacity: 0.85; stroke-width: 2.5; }
+
+.ci-card {
+	border: 1px solid var(--background-modifier-border);
+	border-left: 3px solid var(--ci-c, var(--background-modifier-border));
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	padding: var(--size-4-4);
+	min-height: 140px;
+}
+.ci-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--size-4-2); }
+.ci-name { font-size: var(--font-ui-large); font-weight: var(--font-bold); }
+.ci-edit { font-size: var(--font-ui-smaller); }
+.ci-stat { display: flex; align-items: center; justify-content: space-between; margin: var(--size-4-1) 0 var(--size-4-3); color: var(--ci-c); font-size: var(--font-ui-small); }
+.ci-pips { display: inline-flex; gap: 3px; }
+.ci-pips i { width: 16px; height: 4px; border-radius: 2px; background: var(--background-modifier-border); }
+.ci-pips i.is-on { background: var(--ci-c); }
+.ci-warn { font-size: var(--font-ui-smaller); color: var(--text-warning); margin-bottom: var(--size-4-2); }
+.ci-note { border-left: 2px solid var(--ci-c); background: var(--background-secondary); padding: var(--size-4-2) var(--size-4-3); border-radius: 0 var(--radius-s) var(--radius-s) 0; margin-bottom: var(--size-4-3); }
+.ci-note p, .ci-sec li p { margin: 0; }
+.ci-sec { margin-top: var(--size-4-3); }
+.ci-sec-title, .ci-sec summary { font-size: var(--font-ui-smaller); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); cursor: default; }
+.ci-sec ul { margin: var(--size-4-1) 0 0; padding-left: var(--size-4-5); }
+.ci-empty { color: var(--text-faint); font-size: var(--font-ui-small); }
+
+.ci-roster { display: flex; flex-wrap: wrap; gap: var(--size-4-2); margin-top: var(--size-4-4); }
+.ci-chip { display: inline-flex; align-items: center; font-size: var(--font-ui-smaller); border-radius: 999px; box-shadow: none; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); height: auto; padding: 3px 10px; }
+.ci-chip:hover { color: var(--text-normal); }
+.ci-chip.is-sel { border-color: var(--ci-c); color: var(--text-normal); }
+
+.ci-form .ci-label { display: block; margin: var(--size-4-3) 0 var(--size-4-1); font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.ci-form .ci-text { width: 100%; resize: vertical; }
+.ci-states { display: flex; flex-wrap: wrap; gap: var(--size-4-2); }
+.ci-state { display: inline-flex; align-items: center; font-size: var(--font-ui-smaller); height: auto; padding: 3px 10px; border-radius: 999px; box-shadow: none; border: 1px solid var(--background-modifier-border); background: transparent; }
+.ci-state.is-on { border-color: var(--ci-c); color: var(--text-normal); background: var(--background-secondary); }
+.ci-actions { margin-top: var(--size-4-3); display: flex; justify-content: flex-end; }
+
+.ci-settings-profile { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); padding: var(--size-4-2) var(--size-4-4); margin-bottom: var(--size-4-3); }
+.ci-settings-profile > summary { font-weight: var(--font-semibold); cursor: pointer; padding: var(--size-4-1) 0; }

@@ -1,0 +1,9 @@
+{
+	"id": "character-info",
+	"name": "Character Info",
+	"version": "0.1.0",
+	"minAppVersion": "1.4.0",
+	"description": "A clickable status board over a map: body parts, characters, vehicles, anything with parts. Profiles, custom states, and a history per region, all stored in plain notes.",
+	"author": "Zachariah Farahany",
+	"isDesktopOnly": false
+}

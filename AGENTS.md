@@ -53,6 +53,7 @@ scripts/deploy.sh /path/to/vault   # copy a build into a vault to try it
 ## Gotchas
 
 - `.gitignore` must say `/main.js`, not `main.js`. The bare form also matched `src/main.js` and once left the plugin's entry file out of the repo.
+- Pass `node --test` a quoted glob, never a directory. Node 24 on CI reads `test/` as a module path, and Node 26 locally does not, so a directory passes locally and fails in CI.
 - Imports inside `src/` and `test/` use the `.ts` extension. esbuild and Node both need it.
 - Tests import `data.ts` and `presets.ts` directly under Node's native type stripping, so those two files use erasable syntax only: no enums, namespaces or parameter properties. `render.ts` is bundled by esbuild in its test, so it is not limited this way.
 - The renderer is tested under jsdom with a stubbed `obsidian` module (`test/obsidian-stub.ts`). Nothing here has run in a real Obsidian yet. PROGRESS.md tracks that.

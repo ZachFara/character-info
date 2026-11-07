@@ -3,10 +3,11 @@
 //   types     leaf: imports nothing
 //   data      pure logic: imports types only
 //   presets   built-in data: imports types and data only
+//   profile-text  block text to profile: imports types, data, presets only
 //   render    the figure and card: imports obsidian, data, presets, types
 //   settings  the settings tab: imports obsidian, data, presets, types
 //   main      the only module that wires the others together
-const PURE = "^src/(types|data|presets)\\.ts$";
+const PURE = "^src/(types|data|presets|profile-text)\\.ts$";
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {

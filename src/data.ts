@@ -158,10 +158,11 @@ export function applyEdit(
 	return fm;
 }
 
-/** Parses the `key: value` lines of a character-info code block. */
+/** Parses the `key: value` lines of a character-info code block. Lines starting with # are comments. */
 export function parseBlock(source: string): Record<string, string> {
 	const out: Record<string, string> = {};
 	for (const line of source.split("\n")) {
+		if (line.trimStart().startsWith("#")) continue;
 		const m = /^\s*([A-Za-z][\w-]*)\s*:\s*(.*?)\s*$/.exec(line);
 		if (m?.[1] !== undefined && m[2] !== undefined) {
 			out[m[1].toLowerCase()] = m[2].replace(/^["']|["']$/g, "");
@@ -186,7 +187,15 @@ function isRegion(v: unknown): v is Region {
 	return typeof r.id === "string" && typeof r.name === "string";
 }
 
-function isProfile(v: unknown): v is Profile {
+/** Profiles saved before templates were recorded: guess the template from the map they use. */
+function templateForMap(map: string): string {
+	if (map === "body") return "body";
+	return map === "humanoid" ? "character" : "blank";
+}
+
+type StoredProfile = Omit<Profile, "template"> & { template?: unknown };
+
+function isStoredProfile(v: unknown): v is StoredProfile {
 	const r = asRecord(v);
 	return (
 		typeof r.id === "string" &&
@@ -205,7 +214,11 @@ function isProfile(v: unknown): v is Profile {
 /** Reads saved plugin data, dropping anything malformed instead of trusting it. */
 export function normalizeSettings(raw: unknown): PluginSettings {
 	const r = asRecord(raw);
-	const profiles = Array.isArray(r.profiles) ? (r.profiles as unknown[]).filter(isProfile) : [];
+	const stored = Array.isArray(r.profiles) ? (r.profiles as unknown[]).filter(isStoredProfile) : [];
+	const profiles = stored.map((p) => ({
+		...p,
+		template: typeof p.template === "string" ? p.template : templateForMap(p.map),
+	}));
 	return {
 		profiles,
 		defaultProfile: typeof r.defaultProfile === "string" ? r.defaultProfile : "",

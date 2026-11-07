@@ -19,6 +19,7 @@ import type { Frontmatter, Profile } from "../src/types.ts";
 const profile: Profile = {
 	id: "me",
 	name: "Me",
+	template: "body",
 	map: "body",
 	states: STATE_SETS.maintenance.states,
 	defaultState: "unknown",
@@ -104,6 +105,18 @@ test("normalizeSettings drops malformed saved data instead of trusting it", () =
 	});
 	assert.equal(saved.profiles.length, 1);
 	assert.equal(saved.defaultProfile, "thorn");
+});
+
+test("profiles saved without a template get one from their map", () => {
+	const old = (map: string): unknown => {
+		const { template: _omit, ...rest } = makeProfile("blank", "X", []);
+		return { ...rest, map };
+	};
+	const saved = normalizeSettings({ profiles: [old("body"), old("humanoid"), old("none")] });
+	assert.deepEqual(
+		saved.profiles.map((p) => p.template),
+		["body", "character", "blank"],
+	);
 });
 
 test("makeProfile gives each profile its own copy and a unique id", () => {

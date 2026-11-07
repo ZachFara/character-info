@@ -182,6 +182,7 @@ export function makeProfile(templateKey: TemplateKey, name: string, existing: Pr
 			existing.map((p) => p.id),
 		),
 		name,
+		template: templateKey,
 		map: t.map,
 		states: clone(set.states),
 		defaultState: set.defaultState,

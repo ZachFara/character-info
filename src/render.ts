@@ -1,5 +1,5 @@
 import { MarkdownRenderer, type App, type Component } from "obsidian";
-import { getMap, type MapPreset } from "./presets.ts";
+import { TEMPLATES, getMap, type MapPreset, type TemplateKey } from "./presets.ts";
 import { isUnknownStatus, pickInitial, readRegion, resolveState, tally, toList } from "./data.ts";
 import type { Frontmatter, Profile, Region, RegionData, RegionPatch, State } from "./types.ts";
 
@@ -30,6 +30,35 @@ function svgGroup(className: string, markup: string[]): SVGGElement {
 	g.setAttribute("class", className);
 	for (const m of markup) for (const n of shapeNodes(m)) g.appendChild(n);
 	return g;
+}
+
+/** A warning or hint in the same card style, used when a block cannot be drawn. */
+export function drawNotice(el: HTMLElement, text: string): void {
+	el.empty();
+	el.createDiv({ cls: "character-info" }).createDiv({ cls: "ci-notice", text });
+}
+
+/** Offered when a block names a profile that does not exist yet: one button per template. */
+export function drawCreatePrompt(
+	el: HTMLElement,
+	name: string,
+	onCreate: (template: TemplateKey) => void,
+): void {
+	el.empty();
+	const box = el.createDiv({ cls: "character-info ci-create" });
+	box.createDiv({ cls: "ci-create-title", text: `There is no profile called “${name}” yet.` });
+	box.createDiv({ cls: "ci-create-hint", text: "Create it from a template:" });
+	const row = box.createDiv({ cls: "ci-create-row" });
+	for (const [key, t] of Object.entries(TEMPLATES) as [TemplateKey, (typeof TEMPLATES)[TemplateKey]][]) {
+		const b = row.createEl("button", { text: t.label });
+		b.addEventListener("click", () => {
+			onCreate(key);
+		});
+	}
+	box.createDiv({
+		cls: "ci-create-hint",
+		text: "Or add a line like “template: character” to this block to define it in text.",
+	});
 }
 
 /** One profile drawn as a figure, a detail card and a chip roster. */

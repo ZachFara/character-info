@@ -8,30 +8,46 @@ Everything is stored in plain notes, so Bases, Dataview and sync all work.
 
 ## Use it
 
-1. Install the plugin and enable it. A profile named "Me" (the human body) exists from the start.
-2. Put this in any note:
+Put a block in any note. The text of the block is the profile, so there is nothing to set up first.
 
 ````
 ```character-info
-profile: Me
+profile: Thorn
+template: character
 ```
 ````
 
-3. Click a region, press **Edit**, pick a state, write a note, save. The first save creates the profile's data note.
+Click a region, press **Edit**, pick a state, write a note, save. Your first save creates the profile's data note.
 
-If you leave out `profile:`, the block uses the note's `character-info-profile` frontmatter, then the default profile.
+A block with only `profile: Thorn` shows a profile that is defined elsewhere. A name that does not exist yet shows buttons to create it from a template, so a typo never creates a profile on its own.
 
-## Profiles
+## Change a profile by editing its text
 
-Each profile has its own map, regions, states and data note. Add them under **Settings, Character Info**.
+Every line after `profile:` is optional. Lines that start with `#` are comments.
 
-| Start from | Map | States |
+````
+```character-info
+profile: Thorn
+template: character                  # body, character or blank
+add: Tail, Wings                     # extra regions
+remove: Torso                        # hide regions
+rename: Left arm = Sword arm         # separate several with ;
+states: Healthy, Bruised, Wounded, Maimed, Lost
+default: Healthy                     # the first state unless you say otherwise
+map: humanoid                        # body, humanoid or none
+```
+````
+
+- **Regions** match by name or id, ignoring case. Add a name that matches a map shape, such as `neck`, and the shape comes back.
+- **States** go best first. The first is the default, drawn neutral. Colours are chosen for you, and `Bruised=#e5c13b` sets one.
+- **Stored data stays attached.** Region and state ids do not change when you rename, so your notes keep their meaning.
+- The block you write is the source of truth. Delete a line and its effect goes away.
+
+| Template | Map | States |
 |---|---|---|
-| My body | 23 regions, 16 drawn | Dialed in, Maintaining, Needs work, Injured, Untracked |
-| Tabletop character | head, torso, two arms, two legs | Healthy, Bruised, Wounded, Maimed, Lost |
-| Blank list | none, chips only | Working, Worn, Failing, Broken, Unchecked |
-
-Everything is editable afterwards: rename regions, add your own, change state names, colours and pips, and mark which states count as a problem. A region with no shape on the map shows as a chip under the figure.
+| body | 23 regions, 16 drawn | Dialed in, Maintaining, Needs work, Injured, Untracked |
+| character | head, torso, two arms, two legs | Healthy, Bruised, Wounded, Maimed, Lost |
+| blank | none, chips only | Working, Worn, Failing, Broken, Unchecked |
 
 ## Where the data lives
 

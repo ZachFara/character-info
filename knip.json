@@ -2,5 +2,5 @@
 	"entry": ["scripts/*.mjs", "test/**/*.test.ts"],
 	"project": ["src/**/*.ts", "test/**/*.ts", "scripts/*.mjs", "*.mjs"],
 	"ignoreBinaries": ["make"],
-	"ignoreDependencies": ["prettier", "@commitlint/cli"]
+	"ignoreDependencies": ["prettier"]
 }

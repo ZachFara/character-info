@@ -17,6 +17,8 @@ export interface Region {
 export interface Profile {
 	id: string;
 	name: string;
+	/** The template this profile starts from, so a definition block can be re-applied to it. */
+	template: string;
 	map: string;
 	states: State[];
 	defaultState: string;

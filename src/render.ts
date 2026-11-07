@@ -11,6 +11,7 @@ import {
 	tally,
 	toList,
 } from "./data.ts";
+import { drawStateButtons } from "./card-actions.ts";
 import { drawInventory } from "./inventory-view.ts";
 import type { Frontmatter, Item, Profile, Region, RegionData, RegionPatch, State } from "./types.ts";
 
@@ -238,7 +239,19 @@ export class CharacterInfoView {
 		card.style.setProperty("--ci-c", state.color);
 		this.drawCardTop(card, region, data, state);
 		if (this.editing) this.drawEditor(card, region, data, state);
-		else this.drawDetails(card, data, this.wornOn(region.id, fm));
+		else {
+			this.drawQuickStates(card, region, state);
+			this.drawDetails(card, data, this.wornOn(region.id, fm));
+		}
+	}
+
+	/** One-click state change: the state buttons on the card itself, no Edit form needed. */
+	private drawQuickStates(card: HTMLElement, region: Region, current: State): void {
+		const holder = card.createDiv({ cls: "ci-quick" });
+		drawStateButtons(holder, this.o.profile, current.id, (id) => {
+			if (id === current.id) return;
+			void this.o.save(region.id, { status: id });
+		});
 	}
 
 	private drawCardTop(card: HTMLElement, region: Region, data: RegionData, state: State): void {
@@ -297,7 +310,10 @@ export class CharacterInfoView {
 
 	private drawEditor(card: HTMLElement, region: Region, data: RegionData, state: State): void {
 		const form = card.createDiv({ cls: "ci-form" });
-		const chosen = this.drawStatePicker(form, state);
+		const chosen = { id: state.id };
+		drawStateButtons(form, this.o.profile, state.id, (id) => {
+			chosen.id = id;
+		});
 		const field = (title: string, value: string, placeholder: string, rows: number): HTMLTextAreaElement => {
 			form.createEl("label", { cls: "ci-label", text: title });
 			const ta = form.createEl("textarea", { cls: "ci-text", attr: { rows: String(rows), placeholder } });
@@ -325,24 +341,5 @@ export class CharacterInfoView {
 				this.draw();
 			});
 		});
-	}
-
-	/** Draws one button per state and returns the live choice. */
-	private drawStatePicker(form: HTMLElement, current: State): { id: string } {
-		const chosen = { id: current.id };
-		const row = form.createDiv({ cls: "ci-states" });
-		const buttons: { id: string; el: HTMLElement }[] = [];
-		for (const s of this.o.profile.states) {
-			const b = row.createEl("button", { cls: "ci-state" + (s.id === chosen.id ? " is-on" : "") });
-			b.style.setProperty("--ci-c", s.color);
-			b.createEl("i", { cls: "ci-dot" });
-			b.appendText(s.label);
-			b.addEventListener("click", () => {
-				chosen.id = s.id;
-				for (const x of buttons) x.el.toggleClass("is-on", x.id === chosen.id);
-			});
-			buttons.push({ id: s.id, el: b });
-		}
-		return chosen;
 	}
 }

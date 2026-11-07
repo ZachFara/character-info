@@ -21,7 +21,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T10c. Retire the settings profile editor.** Done: settings hold a default profile and a read-only list with Open data note and Forget. The old editor code is deleted.
 - [x] **T10d. New profile commands.** Done: "New profile" and "New profile, full template" ask for a name and template and insert a block. A fresh block of either kind resolves to exactly its template, and the registry picks the profile up when the block renders. Checked in real Obsidian.
 - [x] **T4. Party view.** Done as its own block, `character-party`, with a title, names or `all`, tiles with a mini figure, the worst region and problem counts, and click to open a profile in full with a way back. A command inserts a party block. Checked in real Obsidian.
-- [ ] **T11a. One-click state change.** Entry point: the card. Done when a row of state buttons on the card changes the state and writes history without entering Edit.
+- [x] **T11a. One-click state change.** Done: a row of state buttons on the card changes the state and writes history without opening Edit. Checked in real Obsidian.
 - [ ] **T11b. Quick add and remove.** Entry point: the card. Done when one add row (Doing, To fix, or Link) adds an item on Enter, link mode suggests notes and stores a wikilink, and each item can be removed.
 - [ ] **T11c. Add a region from the card.** Entry point: the roster. Done when a plus chip adds a region by name without opening settings.
 - [ ] **T3. Review badges.** Entry point: the card. Done when a region in a non-default state that has not been touched for the profile's number of days shows a badge and a Mark reviewed button, and the boundary day is tested.

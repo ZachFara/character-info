@@ -335,3 +335,30 @@ test("adding a kit skips pieces that are already in the inventory", () => {
 	assert.equal(writes.length, 1);
 	assert.equal(writes[0]?.length, 13);
 });
+
+test("the card has a row of state buttons that change the state in one click", () => {
+	const saved: [string, RegionPatch][] = [];
+	const el = mount(profile("character"), { regions: { armL: { status: "lost" } } }, saved);
+	const buttons = all(el, ".ci-quick .ci-state");
+	assert.deepEqual(
+		buttons.map((b) => b.textContent),
+		["Healthy", "Bruised", "Wounded", "Maimed", "Lost"],
+	);
+	assert.equal(must(el, ".ci-quick .ci-state.is-on").textContent, "Lost");
+	click(buttons.find((b) => b.textContent === "Maimed"));
+	assert.deepEqual(saved, [["armL", { status: "maimed" }]]);
+});
+
+test("clicking the state a region is already in saves nothing", () => {
+	const saved: [string, RegionPatch][] = [];
+	const el = mount(profile("character"), { regions: { armL: { status: "lost" } } }, saved);
+	click(all(el, ".ci-quick .ci-state").find((b) => b.textContent === "Lost"));
+	assert.equal(saved.length, 0);
+});
+
+test("the quick row is not shown while editing, where the form has its own state buttons", () => {
+	const el = mount(profile("character"), {});
+	click(must(el, ".ci-edit"));
+	assert.equal(el.querySelector(".ci-quick"), null);
+	assert.equal(all(el, ".ci-form .ci-state").length, 5);
+});

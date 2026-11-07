@@ -472,3 +472,11 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
+
+/* One-click state row on the card. */
+.ci-quick {
+	margin: var(--size-4-2) 0 var(--size-4-3);
+}
+.ci-quick .ci-state {
+	padding: 2px var(--size-4-3);
+}

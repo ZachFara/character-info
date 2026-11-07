@@ -1,6 +1,6 @@
 {
 	"name": "character-info",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "A clickable status board over a map, with profiles. Obsidian plugin.",
 	"main": "main.js",
 	"private": true,

@@ -1,7 +1,7 @@
 {
 	"id": "character-info",
 	"name": "Character Info",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"minAppVersion": "1.5.1",
 	"description": "A clickable character screen for your own body or your tabletop characters: states, notes and history per region, party views, and an optional inventory with armor drawn on the figure.",
 	"author": "Zachariah Farahany",

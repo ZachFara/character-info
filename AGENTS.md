@@ -71,7 +71,7 @@ npm run harness                    # the whole plugin in Chrome at http://127.0.
 
 ## Releasing
 
-Pictures in the README come from a real Obsidian: run `make readme-images` and commit `docs/images/`.
+Pictures in the README come from a real Obsidian: run `make readme-images` and commit `docs/images/`. `hero.png` is the three figures cropped from `body.png`, `armor.png` and `soldier.png` and placed side by side; recompose it by hand after the others change.
 
 To release, bump the version with `npm version <x.y.z>` (it updates `manifest.json` and `versions.json`), merge that through a PR, then push a tag equal to the version, with no `v`. The `release` workflow runs `make check`, confirms the tag matches the manifest, and makes a **draft** GitHub release with `main.js`, `manifest.json` and `styles.css`. Publish the draft by hand. Tagging is publishing, so only do it when the owner asks.
 

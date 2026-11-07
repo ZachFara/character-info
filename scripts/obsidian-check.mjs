@@ -9,6 +9,9 @@
 import { execFileSync, spawn } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { get } from "node:http";
+import { stringify } from "yaml";
+import { KITS, kitItems } from "../src/kits.ts";
+import { TEMPLATES } from "../src/presets.ts";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -20,17 +23,35 @@ const OUT = join(ROOT, ".scratch", "obsidian-check");
 const README = process.argv.includes("--readme");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** A profile data note with these regions and a full starter kit, as the kit row would add it. */
+function dataNote(regions, kit) {
+	const inventory = kitItems(KITS[kit], TEMPLATES.character.regions).map(
+		({ name, kind, qty, note, region, look }) => ({
+			name,
+			kind,
+			...(qty > 1 ? { qty } : {}),
+			...(note ? { note } : {}),
+			...(region ? { region } : {}),
+			...(look ? { look } : {}),
+		}),
+	);
+	return `---\n${stringify({ regions, inventory })}---\n`;
+}
+
+// Each note starts with a title, so the cursor does not open inside the block, where live preview
+// shows the raw text instead of the rendered block.
 const NOTES = {
-	"Body.md": "```character-info\nprofile: Me\ntemplate: body\n```\n",
-	"Thorn.md": "```character-info\nprofile: Thorn\ntemplate: character\nadd: Tail\n```\n",
-	"Ruiz.md": "```character-info\nprofile: Ruiz\ntemplate: character\n```\n",
-	"Party.md": "```character-party\ntitle: The Company\nall\n```\n",
+	"Body.md": "# Body\n\n```character-info\nprofile: Me\ntemplate: body\n```\n",
+	"Thorn.md": "# Thorn\n\n```character-info\nprofile: Thorn\ntemplate: character\nadd: Tail\n```\n",
+	"Ruiz.md": "# Ruiz\n\n```character-info\nprofile: Ruiz\ntemplate: character\n```\n",
+	"Party.md": "# Party\n\n```character-party\ntitle: The Company\nall\n```\n",
 	"Character Info/Me.md":
 		"---\nregions:\n  hips:\n    status: hurt\n    note: Sore after a long run.\n    fix: [Rest a week, See a physio]\n  neck:\n    status: watch\n  gut:\n    status: watch\n  knees:\n    status: watch\n  head:\n    status: ok\n  skin:\n    status: ok\n  feet:\n    status: hurt\n---\n",
-	"Character Info/Thorn.md":
-		"---\nregions:\n  armL:\n    status: wounded\n    note: Crossbow bolt.\n  legR:\n    status: bruised\ninventory:\n  - name: Gravethorn helm\n    kind: armor\n    look: gravethorn:helm\n  - name: Gravethorn chest\n    kind: armor\n    look: gravethorn:chest\n  - name: Gravethorn pauldrons\n    kind: armor\n    look: gravethorn:pauldrons\n  - name: Gravethorn gauntletR\n    kind: armor\n    look: gravethorn:gauntletR\n  - name: Gravethorn gauntletL\n    kind: armor\n    look: gravethorn:gauntletL\n  - name: Gravethorn greaveR\n    kind: armor\n    look: gravethorn:greaveR\n  - name: Gravethorn greaveL\n    kind: armor\n    look: gravethorn:greaveL\n  - name: Gravethorn boots\n    kind: armor\n    look: gravethorn:boots\n---\n",
-	"Character Info/Ruiz.md":
-		"---\nregions:\n  head:\n    status: bruised\ninventory:\n  - name: Military helm\n    kind: armor\n    look: military:helm\n  - name: Military chest\n    kind: armor\n    look: military:chest\n  - name: Military gauntletR\n    kind: armor\n    look: military:gauntletR\n  - name: Military gauntletL\n    kind: armor\n    look: military:gauntletL\n  - name: Military greaveR\n    kind: armor\n    look: military:greaveR\n  - name: Military greaveL\n    kind: armor\n    look: military:greaveL\n  - name: Military boots\n    kind: armor\n    look: military:boots\n---\n",
+	"Character Info/Thorn.md": dataNote(
+		{ armL: { status: "wounded", note: "Crossbow bolt." }, legR: { status: "bruised" } },
+		"gravethorn",
+	),
+	"Character Info/Ruiz.md": dataNote({ head: { status: "bruised" } }, "soldier"),
 };
 
 /** A fresh vault with the built plugin and sample notes, and a profile that opens only it. */
@@ -158,8 +179,17 @@ return { pieces: vis(".ci-armor > *").length, clip: await rect(".character-info"
 	},
 	{
 		name: "soldier",
-		script: `await openNote("Ruiz"); return { toggle: vis(".ci-viewtoggle button").length };`,
+		readme: "soldier",
+		script: `await openNote("Ruiz"); const toggle = vis(".ci-viewtoggle button").length;
+vis(".ci-viewtoggle button").find((b) => b.textContent === "Armor").click(); await sleep(400);
+return { toggle, clip: await rect(".character-info", ".ci-grid") };`,
 		expect: (r) => r.toggle === 2,
+	},
+	{
+		name: "inventory",
+		readme: "inventory",
+		script: `await openNote("Thorn"); return { items: vis(".ci-item").length, clip: await rect(".ci-inventory") };`,
+		expect: (r) => r.items === KITS.gravethorn.items.length,
 	},
 	{
 		name: "reviews-off",

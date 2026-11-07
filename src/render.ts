@@ -11,7 +11,7 @@ import {
 	tally,
 	toList,
 } from "./data.ts";
-import { drawQuickAdd, drawStateButtons, type ListField } from "./card-actions.ts";
+import { drawAddRegion, drawQuickAdd, drawStateButtons, type ListField } from "./card-actions.ts";
 import { drawInventory } from "./inventory-view.ts";
 import type { Frontmatter, Item, Profile, Region, RegionData, RegionPatch, State } from "./types.ts";
 
@@ -31,6 +31,8 @@ export interface ViewOptions {
 	save: (regionId: string, patch: RegionPatch) => Promise<void>;
 	/** Writes the inventory. Null when the inventory feature is off, which hides the panel. */
 	saveInventory: ((items: Item[]) => Promise<void>) | null;
+	/** Adds a region by writing it into the block text. Absent when this view's block cannot be edited. */
+	addRegion?: (name: string) => void;
 }
 
 /** Turns a trusted preset string like `<rect .../>` into SVG nodes. */
@@ -210,6 +212,7 @@ export class CharacterInfoView {
 				this.select(r.id);
 			});
 		}
+		if (this.o.addRegion) drawAddRegion(roster, this.o.addRegion);
 	}
 
 	private markdown(target: HTMLElement, text: string): void {

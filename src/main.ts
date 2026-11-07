@@ -8,6 +8,7 @@ import {
 } from "obsidian";
 import { applyEdit, applyInventory, normalizeSettings, parseBlock } from "./data.ts";
 import {
+	addRegionLine,
 	isDefinition,
 	newProfileBlock,
 	parsePartyBlock,
@@ -142,6 +143,7 @@ export default class CharacterInfoPlugin extends Plugin {
 			getFrontmatter: () => this.frontmatterFor(profile),
 			save: (regionId, patch) => this.saveRegion(profile, regionId, patch),
 			saveInventory: this.inventorySaver(profile),
+			addRegion: this.regionAdder(block, el, ctx, profile),
 		});
 		view.draw();
 		return {
@@ -268,6 +270,37 @@ export default class CharacterInfoPlugin extends Plugin {
 		const folder = path.split("/").slice(0, -1).join("/");
 		if (folder && !this.app.vault.getAbstractFileByPath(folder)) await this.app.vault.createFolder(folder);
 		return this.app.vault.create(path, `---\ncharacter-info-profile: ${profile.name}\nregions: {}\n---\n`);
+	}
+
+	/**
+	 * Adds a region by editing the block's own text, or undefined when the block cannot be found in
+	 * its note (embedded views, for instance). A block that only referred to a profile becomes a
+	 * definition, so it keeps the profile's template.
+	 */
+	private regionAdder(
+		block: Record<string, string>,
+		el: HTMLElement,
+		ctx: MarkdownPostProcessorContext,
+		profile: Profile,
+	): ((name: string) => void) | undefined {
+		const info = ctx.getSectionInfo(el);
+		const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+		if (!info || !(file instanceof TFile)) return undefined;
+		return (name) => {
+			void this.app.vault
+				.process(file, (text) => {
+					const lines = text.split("\n");
+					if (!lines[info.lineStart]?.trimStart().startsWith("```character-info")) return text;
+					const inner = lines.slice(info.lineStart + 1, info.lineEnd).join("\n");
+					const edited = addRegionLine(inner, name, isDefinition(block) ? null : profile.template);
+					lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...edited.split("\n"));
+					return lines.join("\n");
+				})
+				.catch((err: unknown) => {
+					console.error("Character Info: could not edit the block", err);
+					new Notice("Character Info: could not add the region. See the console for details.");
+				});
+		};
 	}
 
 	/** The inventory writer for a profile, or null when the inventory feature is switched off. */

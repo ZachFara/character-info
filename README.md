@@ -19,7 +19,7 @@ template: character
 
 Easiest start: open the command palette in a note and run **Character Info: New profile**. It asks for a name and a template and inserts the block. **New profile, full template** inserts every key, with the template's values and short comment lines, so everything you can change is already in the text.
 
-Click a region and pick a state with one click. To add a task, a fix or a link without opening anything, use the small row at the bottom of the card: choose Doing, To fix or Link a note, type, and press Enter. Link mode suggests your notes as you type and stores a real `[[link]]`. Hover an item and press the cross to remove it. **Edit** is there for longer text.
+Click a region and pick a state with one click. To add a task, a fix or a link without opening anything, use the small row at the bottom of the card: choose Doing, To fix or Link a note, type, and press Enter. Link mode suggests your notes as you type and stores a real `[[link]]`. Hover an item and press the cross to remove it. **Edit** is there for longer text. The dashed **+ Add region** chip adds a region by writing it into the block's `add:` line for you, so the text stays the source of truth.
 
 Click a region, press **Edit**, pick a state, write a note, save. Your first save creates the profile's data note.
 

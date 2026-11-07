@@ -90,3 +90,23 @@ export function drawQuickAdd(
 	});
 	row.createEl("button", { text: "Add" }).addEventListener("click", add);
 }
+
+/** A plus chip at the end of the roster. It turns into a box for a region name, and Enter adds it. */
+export function drawAddRegion(roster: HTMLElement, onAdd: (name: string) => void): void {
+	const chip = roster.createEl("button", { cls: "ci-chip ci-chip-add", text: "+ Add region" });
+	chip.addEventListener("click", () => {
+		const input = roster.createEl("input", {
+			cls: "ci-add-region",
+			attr: { type: "text", placeholder: "Region name" },
+		});
+		chip.remove();
+		input.focus();
+		input.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" && input.value.trim()) onAdd(input.value.trim());
+			else if (e.key === "Escape") {
+				input.remove();
+				drawAddRegion(roster, onAdd);
+			}
+		});
+	});
+}

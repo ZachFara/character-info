@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseBlock } from "../src/data.ts";
 import {
+	addRegionLine,
 	isDefinition,
 	newProfileBlock,
 	parsePartyBlock,
@@ -247,4 +248,38 @@ test("a party block can have a title, comments, a members prefix and all", () =>
 	assert.deepEqual(parsePartyBlock("ALL, Thorn").names, ["Thorn"]);
 	assert.deepEqual(parsePartyBlock(""), { title: null, names: [], all: false });
 	assert.equal(parsePartyBlock("title:").title, null);
+});
+
+test("adding a region writes it into an existing add line or creates one after profile", () => {
+	assert.equal(
+		addRegionLine("profile: Thorn\ntemplate: character\nadd: Tail", "Wings", null),
+		"profile: Thorn\ntemplate: character\nadd: Tail, Wings",
+	);
+	assert.equal(
+		addRegionLine("profile: Thorn\ntemplate: character\nadd:", "Tail", null),
+		"profile: Thorn\ntemplate: character\nadd: Tail",
+	);
+	assert.equal(
+		addRegionLine("profile: Thorn\ntemplate: character\nremove: Torso", "Tail", null),
+		"profile: Thorn\nadd: Tail\ntemplate: character\nremove: Torso",
+	);
+});
+
+test("adding to a block that only referred to a profile makes it a definition", () => {
+	const text = addRegionLine("profile: Thorn", "Tail", "character");
+	assert.equal(text, "profile: Thorn\ntemplate: character\nadd: Tail");
+	assert.equal(isDefinition(parseBlock(text)), true);
+	assert.equal(resolve(text).profile.regions.at(-1)?.name, "Tail");
+});
+
+test("a commented add line is left alone and the line order and comments survive", () => {
+	const source = "# who this is\nprofile: Thorn\ntemplate: character\n# add: Nothing";
+	const text = addRegionLine(source, "Tail", null);
+	assert.ok(text.includes("# add: Nothing"));
+	assert.ok(text.includes("# who this is"));
+	assert.equal(text.split("\n").filter((l) => l.startsWith("add:")).length, 1);
+});
+
+test("a block with no profile line gets the add line at the top", () => {
+	assert.equal(addRegionLine("template: body", "Tail", null), "add: Tail\ntemplate: body");
 });

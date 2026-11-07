@@ -517,3 +517,11 @@
 .ci-li-x:focus-visible {
 	visibility: visible;
 }
+
+/* The plus chip and the box it becomes. */
+.ci-chip-add {
+	border-style: dashed;
+}
+.ci-add-region {
+	min-width: 140px;
+}

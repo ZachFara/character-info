@@ -56,5 +56,9 @@ Made to keep work moving. Each is cheap to change.
 
 ## Next steps
 
-1. Build T11a to T11c, then T3, T5, T7, T9, T8 and T13.
-2. Work down the list.
+Every planned task is done. What is left needs the owner:
+
+1. **Publish or not.** Make the repo public and push a `0.2.0` tag to draft the first release, then submit to the community list (checklist in AGENTS.md).
+2. **Try it on a phone.** `isDesktopOnly` is false and mobile is untested.
+3. **Move the owner's Bodily Maintenance note to the plugin.** Its data maps onto the body template's region ids, but changing the vault needs the owner's go-ahead.
+4. **Known small follow-ups.** The link suggester also offers the plugin's own data notes, and a party lists only profiles whose block has rendered once.

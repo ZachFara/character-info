@@ -15,6 +15,7 @@ Character Info is an Obsidian plugin that shows anything made of parts as a clic
 - **Profile.** A named set of a map, regions, states and a data note path. Stored in the plugin's `data.json`. Several can exist. One is the default.
 - **Map.** A built-in SVG figure: `body`, `humanoid`, or `none`. A map is a set of shapes keyed by region id.
 - **Region.** One part. Its id picks the map shape that draws it. A region with no shape shows only as a chip.
+- **Neutral default.** A region in the profile's default state is drawn in the neutral body colour, so colour on the figure always means something needs attention. Its chip still shows the state colour. The selected region gets an outline in the text colour.
 - **State.** A labelled, coloured level with a pip count and a flag for whether it counts as a problem. A state set is chosen from a template and then editable.
 - **Data note.** One Markdown note per profile. Its frontmatter holds each region's status, note, doing, fix, links, and history.
 

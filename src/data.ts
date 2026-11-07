@@ -291,3 +291,14 @@ export function applyInventory(fm: Frontmatter, items: Item[]): Frontmatter {
 	}));
 	return fm;
 }
+
+/** The items worn or held on one region, in the order they are listed. */
+export function itemsOnRegion(items: Item[], regionId: string): Item[] {
+	return items.filter((i) => i.region === regionId);
+}
+
+/** An item as one line of text: quantity when more than one, then the name and note. */
+export function describeItem(item: Item): string {
+	const count = item.qty > 1 ? `${String(item.qty)}× ` : "";
+	return `${count}${item.name}${item.note ? ` · ${item.note}` : ""}`;
+}

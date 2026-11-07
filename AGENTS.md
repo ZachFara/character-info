@@ -67,6 +67,22 @@ make obsidian-check                # run the plugin in a real, throwaway Obsidia
 - Frontmatter and `data.json` are untrusted. Read them through `readRegion` and `normalizeSettings`.
 - No Claude co-author trailers, no "Generated with" lines, no mention of Claude as author in commits, PRs or docs. The owner is the only author.
 
+## Releasing
+
+Pictures in the README come from a real Obsidian: run `make readme-images` and commit `docs/images/`.
+
+To release, bump the version with `npm version <x.y.z>` (it updates `manifest.json` and `versions.json`), merge that through a PR, then push a tag equal to the version, with no `v`. The `release` workflow runs `make check`, confirms the tag matches the manifest, and makes a **draft** GitHub release with `main.js`, `manifest.json` and `styles.css`. Publish the draft by hand. Tagging is publishing, so only do it when the owner asks.
+
+Before submitting to the Obsidian community list (a PR to `obsidianmd/obsidian-releases`):
+
+- [ ] The repo is public. It is private now, on hold by the owner's choice.
+- [ ] README and LICENSE are present.
+- [ ] `manifest.json`: lowercase `id` without "obsidian", `name`, semver `version`, `minAppVersion`, a description under 250 characters that ends with a period and does not say "Obsidian" or "This plugin", `author`, `isDesktopOnly`.
+- [ ] A published release whose tag equals the manifest version, with the three files attached.
+- [ ] `versions.json` maps each version to its minimum Obsidian version.
+- [ ] Plugin guidelines: sentence case in the UI, no default hotkeys, Obsidian CSS variables, no `console.log`, no `innerHTML` with user content. The lint rules in `make check` cover most of this.
+- [ ] Tried on mobile, because `isDesktopOnly` is false. Not done yet.
+
 ## Decision records
 
 `docs/decisions/NNNN-title.md`, each with Context, Decision, Consequences. Add one for any language, framework, tooling, or architecture choice. The records are the source of truth for how.

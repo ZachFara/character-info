@@ -35,6 +35,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T9. Real-Obsidian check script.** Done: `make obsidian-check` builds the plugin, starts a throwaway Obsidian with its own profile and vault, checks the body, a character, the armor view and a party, saves screenshots to `.scratch/obsidian-check/`, and exits non-zero on failure. See decision 0014.
 - [x] **T8. Release prep.** Done up to publishing: version 0.2.0, a people-first manifest description, a `release` workflow that makes a draft release from a tag after `make check`, README pictures from `make readme-images`, and a submission checklist in AGENTS.md. Not published: that needs a public repo and a tag, both the owner's call. Mobile is untested. See decision 0015.
 - [x] **T13. List indent in the card.** Done: card lists use a small dot aligned with the section title.
+- [x] **T16. Data folder.** Done: a Data folder setting with a Move button that moves the data notes in the old folder, and profiles follow a data note or folder moved by hand. Checked in real Obsidian. See decision 0017.
 - [x] **T15. Browser harness.** Done: `npm run harness` runs the whole plugin in Chrome over an in-memory vault, with settings, commands, both themes and a phone-width frame. See decision 0016. Faster than `make obsidian-check` for clicking around; results still need a real Obsidian check.
 
 ### Found with the browser harness
@@ -75,7 +76,7 @@ Made to keep work moving. Each is cheap to change.
 
 Every planned task is done. What is left needs the owner:
 
-1. **Publish or not.** Make the repo public and push a `0.2.0` tag to draft the first release, then submit to the community list (checklist in AGENTS.md).
+1. **Published.** 0.2.0 is live on the community site; 0.2.1 adds the data folder.
 2. **Try it on a phone.** `isDesktopOnly` is false and mobile is untested.
-3. **Move the owner's Bodily Maintenance note to the plugin.** Its data maps onto the body template's region ids, but changing the vault needs the owner's go-ahead.
+3. **The owner's Bodily Maintenance note uses the plugin** since 2026-11-07.
 4. **Known small follow-ups.** The link suggester also offers the plugin's own data notes, and a party lists only profiles whose block has rendered once.

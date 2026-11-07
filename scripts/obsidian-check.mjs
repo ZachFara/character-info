@@ -206,6 +206,29 @@ return { before, ...after };`,
 		script: `await openNote("Party"); return { tiles: vis(".ci-tile").map((t) => t.querySelector(".ci-tile-name")?.textContent), clip: await rect(".ci-party") };`,
 		expect: (r) => ["Me", "Thorn", "Ruiz"].every((n) => r.tiles.includes(n)),
 	},
+	{
+		// Last, because it moves the data notes. A note moved by hand is followed, and the settings
+		// button moves the rest of the folder.
+		name: "data-folder",
+		script: `const plugin = app.plugins.plugins["character-info"];
+const path = (n) => plugin.settings.profiles.find((p) => p.name === n).dataPath;
+await app.vault.createFolder("Hidden");
+await app.fileManager.renameFile(app.vault.getAbstractFileByPath("Character Info/Me.md"), "Hidden/Me.md"); await sleep(500);
+await openNote("Body"); const selected = vis(".ci-name")[0]?.textContent;
+const tab = app.setting.pluginTabs.find((t) => t.id === "character-info");
+const blocked = await tab.actions.moveDataFolder("Deep/CI"); await sleep(500);
+await openNote("Thorn");
+return { me: path("Me"), thorn: path("Thorn"), folder: plugin.settings.dataFolder, blocked, selected,
+  moved: app.vault.getAbstractFileByPath("Deep/CI/Thorn.md") !== null, items: vis(".ci-item").length };`,
+		expect: (r) =>
+			r.me === "Hidden/Me.md" &&
+			r.selected === "Hips & Low Back" &&
+			r.thorn === "Deep/CI/Thorn.md" &&
+			r.moved &&
+			r.blocked === 0 &&
+			r.folder === "Deep/CI" &&
+			r.items === KITS.gravethorn.items.length,
+	},
 ];
 
 async function main() {

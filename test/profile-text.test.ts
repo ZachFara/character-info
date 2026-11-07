@@ -86,11 +86,11 @@ test("a rename with no equals sign is reported", () => {
 
 test("states replace the template's states, best first, with the first as the default", () => {
 	const { profile } = resolve(
-		"profile: Thorn\ntemplate: character\nstates: Healthy, Bruised, Wounded, Maimed, Lost",
+		"profile: Thorn\ntemplate: character\nstates: Healthy, Bruised, Wounded, Severe, Lost",
 	);
 	assert.deepEqual(
 		profile.states.map((s) => s.id),
-		["healthy", "bruised", "wounded", "maimed", "lost"],
+		["healthy", "bruised", "wounded", "severe", "lost"],
 	);
 	assert.equal(profile.defaultState, "healthy");
 	assert.deepEqual(
@@ -205,7 +205,7 @@ test("the full block lists every key and explains each with a comment", () => {
 		assert.ok(text.includes(key), `missing ${key}`);
 	}
 	assert.match(text, /# It has: Head, Torso, Right arm, Left arm, Right leg, Left leg/);
-	assert.match(text, /# states: Healthy, Bruised, Wounded, Maimed, Lost/);
+	assert.match(text, /# states: Healthy, Bruised, Wounded, Severe, Lost/);
 	assert.match(text, /# default: Healthy/);
 	assert.ok(text.split("\n").filter((l) => l.startsWith("#")).length >= 4);
 });

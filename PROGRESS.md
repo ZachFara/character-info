@@ -25,7 +25,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T11b. Quick add and remove.** Done: one row on the card adds a Doing item, a To fix item or a linked note on Enter, link mode suggests notes and stores a wikilink, and each item has a cross to remove it. Checked in real Obsidian. Follow-up: the suggester also offers the plugin's own data notes, which share a name with the character notes.
 - [x] **T11c. Add a region from the card.** Done: a dashed plus chip adds a region by writing it into the block's `add:` line, and a block that only referred to a profile gains `template:` first. Hidden where the block cannot be edited. Checked in real Obsidian. The render tests were split into shared helpers, core tests and inventory tests to stay under the file size limit.
 - [ ] **T3. Review badges.** Entry point: the card. Done when a region in a non-default state that has not been touched for the profile's number of days shows a badge and a Mark reviewed button, and the boundary day is tested.
-- [ ] **T5. Hit roll and damage.** Entry point: the figure. Done when a roll button picks a region by weight and selects it, Worsen and Heal buttons step the state, and both are tested with a seeded roll.
+- [x] **T5. Dropped.** The owner does not want hit rolls or Worsen and Heal buttons. Do not build dice or damage mechanics.
 - [x] **T6a and T6b. Inventory switch and items.** Done: a settings toggle, off by default, shows an inventory panel with items grouped as weapons, armor and gear. Items have a name, quantity, note and optional region, with plus, minus and remove, and are stored in the data note. Checked in real Obsidian.
 - [x] **T6c. Worn and held.** Done: an item tied to a region shows on that region's card under Worn and held when the inventory is on. Checked in real Obsidian.
 - [x] **T6d. Starter kits.** Done: a kit row adds a modern soldier loadout, a medieval knight, or the original Gravethorn dark fantasy warplate, placed on the regions the profile has and never duplicating a piece. The naming rule is decision 0011. Checked in real Obsidian.
@@ -41,6 +41,7 @@ Made to keep work moving. Each is cheap to change.
 - **Profiles are text in the block.** The block text defines a profile and settings only list them. See decision 0009. The older settings editor is retired in T10c.
 - **Inventory** is a global switch in settings, off by default. Items live in the profile's data note as `inventory:` entries with a name, a quantity and an optional region.
 - **Review badges** use a number of days per profile, default 30, 0 to turn off. Any save counts as a review.
+- **State names stay humane.** People use this for their own health, so state labels avoid words like "maimed". The wounds set runs Healthy, Bruised, Wounded, Severe, Lost.
 - **Minimum Obsidian version** is 1.5.1, the version that added the modal title the new-profile dialog uses.
 
 ## Open Questions

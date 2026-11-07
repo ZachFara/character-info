@@ -96,7 +96,7 @@ export const STATE_SETS = {
 			{ id: "healthy", label: "Healthy", color: C.green, pips: 5, bad: false },
 			{ id: "bruised", label: "Bruised", color: C.yellow, pips: 4, bad: true },
 			{ id: "wounded", label: "Wounded", color: C.orange, pips: 3, bad: true },
-			{ id: "maimed", label: "Maimed", color: C.red, pips: 1, bad: true },
+			{ id: "severe", label: "Severe", color: C.red, pips: 1, bad: true },
 			{ id: "lost", label: "Lost", color: C.violet, pips: 0, bad: true },
 		],
 	},

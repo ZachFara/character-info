@@ -36,7 +36,7 @@ template: character                  # body, character or blank
 add: Tail, Wings                     # extra regions
 remove: Torso                        # hide regions
 rename: Left arm = Sword arm         # separate several with ;
-states: Healthy, Bruised, Wounded, Maimed, Lost
+states: Healthy, Bruised, Wounded, Severe, Lost
 default: Healthy                     # the first state unless you say otherwise
 map: humanoid                        # body, humanoid or none
 ```
@@ -50,7 +50,7 @@ map: humanoid                        # body, humanoid or none
 | Template | Map | States |
 |---|---|---|
 | body | 23 regions, 16 drawn | Dialed in, Maintaining, Needs work, Injured, Untracked |
-| character | head, torso, two arms, two legs | Healthy, Bruised, Wounded, Maimed, Lost |
+| character | head, torso, two arms, two legs | Healthy, Bruised, Wounded, Severe, Lost |
 | blank | none, chips only | Working, Worn, Failing, Broken, Unchecked |
 
 ## Party

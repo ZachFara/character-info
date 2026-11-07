@@ -119,11 +119,11 @@ test("the card has a row of state buttons that change the state in one click", (
 	const buttons = all(el, ".ci-quick .ci-state");
 	assert.deepEqual(
 		buttons.map((b) => b.textContent),
-		["Healthy", "Bruised", "Wounded", "Maimed", "Lost"],
+		["Healthy", "Bruised", "Wounded", "Severe", "Lost"],
 	);
 	assert.equal(must(el, ".ci-quick .ci-state.is-on").textContent, "Lost");
-	click(buttons.find((b) => b.textContent === "Maimed"));
-	assert.deepEqual(saved, [["armL", { status: "maimed" }]]);
+	click(buttons.find((b) => b.textContent === "Severe"));
+	assert.deepEqual(saved, [["armL", { status: "severe" }]]);
 });
 
 test("clicking the state a region is already in saves nothing", () => {

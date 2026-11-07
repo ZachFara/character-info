@@ -14,7 +14,7 @@ template: character
 add: Tail, Wings
 remove: Pelvic Floor
 rename: Left arm = Sword arm; Head = Skull
-states: Healthy, Bruised, Wounded, Maimed, Lost
+states: Healthy, Bruised, Wounded, Severe, Lost
 default: Healthy
 map: humanoid
 ```

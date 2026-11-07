@@ -6,6 +6,7 @@
 //   profile-text  block text to profile: imports types, data, presets only
 //   render    the figure and card: imports obsidian, data, presets, types
 //   settings  the settings tab: imports obsidian, data, presets, types
+//   new-profile  the new profile dialog: imports obsidian, presets, profile-text
 //   main      the only module that wires the others together
 const PURE = "^src/(types|data|presets|profile-text)\\.ts$";
 
@@ -42,8 +43,8 @@ module.exports = {
 		{
 			name: "ui-modules-do-not-import-each-other",
 			severity: "error",
-			from: { path: "^src/(render|settings)\\.ts$" },
-			to: { path: "^src/(render|settings|main)\\.ts$" },
+			from: { path: "^src/(render|settings|new-profile)\\.ts$" },
+			to: { path: "^src/(render|settings|new-profile|main)\\.ts$" },
 		},
 		{
 			name: "src-does-not-import-tests",

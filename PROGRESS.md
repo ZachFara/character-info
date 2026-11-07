@@ -32,7 +32,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T6e. Armor on the figure.** Done: kit armor carries a look, drawn as hand-made SVG over a neutral body in an Armor view. A Body / Armor switch appears only when drawable armor is worn. Two sets: modern military and Gravethorn. The figure now uses the padded, outlined style of the owner's original body note. Checked in real Obsidian. See decision 0012.
 - [x] **T14. Edit inventory items.** Done: a pencil on each item opens an inline form for name, note, kind, region and, for armor, the drawing shown on the figure. Checked in real Obsidian.
 - [x] **T7. Custom SVG maps.** Done as text: `map: Maps/kael.svg` (any SVG) in the block. Shapes with an id become regions, named from data-name, a title or the id. The file is sanitized to plain shapes and geometry, reloads when it changes, and gives a profile with no regions one per shape. Checked in real Obsidian. See decision 0013.
-- [ ] **T9. Real-Obsidian check script.** Done when a committed script starts an isolated Obsidian with the test vault and returns screenshots and results, and a decision record covers it.
+- [x] **T9. Real-Obsidian check script.** Done: `make obsidian-check` builds the plugin, starts a throwaway Obsidian with its own profile and vault, checks the body, a character, the armor view and a party, saves screenshots to `.scratch/obsidian-check/`, and exits non-zero on failure. See decision 0014.
 - [ ] **T8. Release prep.** Done when a tag builds `main.js`, `manifest.json` and `styles.css` in CI, the README has screenshots, and the community plugin checklist is satisfied.
 - [x] **T13. List indent in the card.** Done: card lists use a small dot aligned with the section title.
 

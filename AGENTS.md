@@ -52,6 +52,7 @@ make format    # prettier --write
 npm test       # tests only
 npm run build  # writes main.js (gitignored)
 scripts/deploy.sh /path/to/vault   # copy a build into a vault to try it
+make obsidian-check                # run the plugin in a real, throwaway Obsidian (needs Obsidian)
 ```
 
 `make check` runs, in order: prettier check, eslint with zero warnings (strict type-checked rules, complexity limits, the Obsidian rules), `tsc --noEmit` in strict mode, knip for dead code, dependency-cruiser for module boundaries, the layout check, the tests, and a production build. The pre-commit hook and CI both run exactly `make check`. The commit-msg hook and CI also check conventional commits.

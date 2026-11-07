@@ -31,7 +31,11 @@ interface Mounted {
 
 export default class CharacterInfoPlugin extends Plugin {
 	/** Edited in place, never reassigned, because the settings tab holds a reference. */
-	settings: PluginSettings = { profiles: [], defaultProfile: "", features: { inventory: false } };
+	settings: PluginSettings = {
+		profiles: [],
+		defaultProfile: "",
+		features: { inventory: false, reviews: true },
+	};
 	/** Party blocks listen here so a profile added or forgotten anywhere updates them. */
 	private readonly registryListeners = new Set<() => void>();
 	/** Maps read from SVG files, by file path. Cleared for a file when it changes. */
@@ -157,7 +161,8 @@ export default class CharacterInfoPlugin extends Plugin {
 	private partyMembers(names: string[], all: boolean, sourcePath: string): PartyMember[] {
 		const show = (profile: Profile): PartyMember => {
 			const loaded = this.loadedMap(profile, sourcePath);
-			return { profile: loaded ? withMapRegions(profile, loaded.map, loaded.names) : profile };
+			const withRegions = loaded ? withMapRegions(profile, loaded.map, loaded.names) : profile;
+			return { profile: this.forDisplay(withRegions) };
 		};
 		if (all) return this.settings.profiles.map(show);
 		return names.map((name) => {
@@ -198,7 +203,7 @@ export default class CharacterInfoPlugin extends Plugin {
 		const defined = this.profileForBlock(block, el, remount);
 		const ready = defined ? this.withMap(defined, el, ctx.sourcePath) : null;
 		if (!ready) return none;
-		const { profile } = ready;
+		const profile = this.forDisplay(ready.profile);
 		const view = new CharacterInfoView({
 			app: this.app,
 			el,
@@ -367,6 +372,11 @@ export default class CharacterInfoPlugin extends Plugin {
 					new Notice("Character Info: could not add the region. See the console for details.");
 				});
 		};
+	}
+
+	/** The profile as views should show it. With review reminders off in settings, nothing is ever due. */
+	private forDisplay(profile: Profile): Profile {
+		return this.settings.features.reviews ? profile : { ...profile, reviewAfterDays: 0 };
 	}
 
 	/** The inventory writer for a profile, or null when the inventory feature is switched off. */

@@ -62,7 +62,7 @@ review: 30                           # days before a changed region asks to be r
 
 ## Review reminders
 
-A region that is not in its default state asks to be looked at again once it has gone untouched for a while: 30 days unless the block says otherwise. Its chip gets a small ring, the header counts how many are due, and the card says how long it has been, with a **Mark reviewed** button. Any save counts as a review. Set the period with `review: 14` in the block, or turn it off with `review: 0`.
+A region that is not in its default state asks to be looked at again once it has gone untouched for a while: 30 days unless the block says otherwise. Its chip gets a small ring, the header counts how many are due, and the card says how long it has been, with a **Mark reviewed** button. Any save counts as a review. Set the period with `review: 14` in the block, or turn it off for one profile with `review: 0`. To turn reminders off everywhere, switch off **Settings, Character Info, Review reminders**.
 
 ## Party
 

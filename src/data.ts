@@ -260,7 +260,10 @@ export function normalizeSettings(raw: unknown): PluginSettings {
 	return {
 		profiles,
 		defaultProfile: typeof r.defaultProfile === "string" ? r.defaultProfile : "",
-		features: { inventory: asRecord(r.features).inventory === true },
+		features: {
+			inventory: asRecord(r.features).inventory === true,
+			reviews: asRecord(r.features).reviews !== false,
+		},
 	};
 }
 

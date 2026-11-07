@@ -109,12 +109,12 @@ test("normalizeSettings drops malformed saved data instead of trusting it", () =
 	assert.deepEqual(normalizeSettings(null), {
 		profiles: [],
 		defaultProfile: "",
-		features: { inventory: false },
+		features: { inventory: false, reviews: true },
 	});
 	assert.deepEqual(normalizeSettings("junk"), {
 		profiles: [],
 		defaultProfile: "",
-		features: { inventory: false },
+		features: { inventory: false, reviews: true },
 	});
 	const good = makeProfile("character", "Thorn", []);
 	const saved = normalizeSettings({
@@ -183,6 +183,12 @@ test("the inventory flag defaults to off and only a true value turns it on", () 
 	assert.equal(normalizeSettings({}).features.inventory, false);
 	assert.equal(normalizeSettings({ features: { inventory: "yes" } }).features.inventory, false);
 	assert.equal(normalizeSettings({ features: { inventory: true } }).features.inventory, true);
+});
+
+test("review reminders default to on and only an explicit false turns them off", () => {
+	assert.equal(normalizeSettings({}).features.reviews, true);
+	assert.equal(normalizeSettings({ features: { reviews: "no" } }).features.reviews, true);
+	assert.equal(normalizeSettings({ features: { reviews: false } }).features.reviews, false);
 });
 
 test("the inventory is read with defaults and junk entries dropped", () => {

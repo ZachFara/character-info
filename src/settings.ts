@@ -24,6 +24,7 @@ export class CharacterInfoSettingTab extends PluginSettingTab {
 			text: "Profiles are defined by the text of a character-info block in a note. This list follows them automatically.",
 		});
 		this.drawFeatures();
+		this.drawReviews();
 		this.drawDefaultProfile();
 		new Setting(this.containerEl).setName("Profiles").setHeading();
 		const { profiles } = this.actions.settings;
@@ -46,6 +47,21 @@ export class CharacterInfoSettingTab extends PluginSettingTab {
 			.addToggle((t) =>
 				t.setValue(s.features.inventory).onChange(async (v) => {
 					s.features.inventory = v;
+					await this.actions.save();
+				}),
+			);
+	}
+
+	private drawReviews(): void {
+		const s = this.actions.settings;
+		new Setting(this.containerEl)
+			.setName("Review reminders")
+			.setDesc(
+				"Flag a region that is not in its default state and has not been updated for a while. A block's review line sets how long.",
+			)
+			.addToggle((t) =>
+				t.setValue(s.features.reviews).onChange(async (v) => {
+					s.features.reviews = v;
 					await this.actions.save();
 				}),
 			);

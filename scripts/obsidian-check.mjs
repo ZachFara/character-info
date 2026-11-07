@@ -162,6 +162,15 @@ return { pieces: vis(".ci-armor > *").length, clip: await rect(".character-info"
 		expect: (r) => r.toggle === 2,
 	},
 	{
+		name: "reviews-off",
+		script: `const plugin = app.plugins.plugins["character-info"]; const before = vis(".ci-due-count").length;
+plugin.settings.features.reviews = false; await plugin.saveData(plugin.settings); plugin.notifyRegistry(); await openNote("Body");
+const after = { count: vis(".ci-due-count").length, rings: vis(".ci-chip.is-due").length, card: vis(".ci-review").length };
+plugin.settings.features.reviews = true; await plugin.saveData(plugin.settings); plugin.notifyRegistry();
+return { before, ...after };`,
+		expect: (r) => r.count === 0 && r.rings === 0 && r.card === 0,
+	},
+	{
 		name: "party",
 		readme: "party",
 		script: `await openNote("Party"); return { tiles: vis(".ci-tile").map((t) => t.querySelector(".ci-tile-name")?.textContent), clip: await rect(".ci-party") };`,

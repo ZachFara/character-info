@@ -23,6 +23,8 @@ map: humanoid
 - A block with any key beyond `profile` defines the profile and writes the result to a registry in the plugin settings. A block with only `profile` refers to the registry entry.
 - A name that is not in the registry and has no definition shows buttons to create it from each template. A typo never creates a profile by itself.
 - The registry feeds the profiles overview, so an overview needs no edits when a profile is added.
+- Lines starting with `#` are comments and are ignored. Keys with no value are ignored.
+- Two commands start a profile. The simple one inserts `profile` and `template` only. The full one inserts every key, filled in from the template, with comment lines, so everything that can be changed is already visible in the text.
 - Region and state ids stay stable on rename, because data notes are keyed by id. Replacing `states` can leave stored statuses that no longer match. They show as the default state with a warning.
 
 ## Consequences

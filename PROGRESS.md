@@ -20,6 +20,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [ ] **T10a. Profile text format.** Entry point: the text of a `character-info` block. Done when a pure parser and resolver turn the block text into a profile: `profile`, `template`, `add`, `remove`, `rename`, `states`, `default` and `map` keys, with tests for each key, for bad input and for unknown keys.
 - [ ] **T10b. Blocks define and register profiles.** Entry point: a block. Done when a block with more than `profile:` defines that profile and updates the registry in settings, a block with only `profile:` refers to the registry, and an unknown name with no definition shows one-click buttons that register it from each template. Rendering twice makes one profile. Depends on T10a.
 - [ ] **T10c. Retire the settings profile editor.** Entry point: the settings tab. Done when settings hold only global options and a read-only list of known profiles with a remove button, and the old editor code is deleted. Depends on T10b.
+- [ ] **T10d. New profile commands.** Entry point: the command palette. Done when "New profile (simple)" asks for a name and a template and inserts a minimal block, and "New profile (full template)" inserts a block with every key present, the template's values filled in, and short `#` comment lines explaining each key. Tests check that parsing the full block gives back the template's profile exactly. Depends on T10a.
 - [ ] **T4. Party view and profiles overview.** Entry point: a block with `profiles: A, B` or `profiles: all`. Done when each profile shows a compact figure with its worst region, a tile opens that profile's full view and goes back, and `all` follows new profiles with no edit. The first created profile also creates `Character Info/Profiles.md` holding an `all` block, and a command opens it.
 - [ ] **T11a. One-click state change.** Entry point: the card. Done when a row of state buttons on the card changes the state and writes history without entering Edit.
 - [ ] **T11b. Quick add and remove.** Entry point: the card. Done when one add row (Doing, To fix, or Link) adds an item on Enter, link mode suggests notes and stores a wikilink, and each item can be removed.
@@ -52,5 +53,5 @@ Made to keep work moving. Each is cheap to change.
 
 ## Next steps
 
-1. Build T10a, T10b, T10c, then T4.
+1. Build T10a, T10b, T10c, T10d, then T4.
 2. Work down the list.

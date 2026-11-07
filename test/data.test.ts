@@ -2,6 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
 	applyEdit,
+	dataPathFor,
+	folderMoves,
+	followRename,
+	normalizeFolder,
 	daysBetween,
 	isReviewDue,
 	lastTouched,
@@ -110,11 +114,13 @@ test("normalizeSettings drops malformed saved data instead of trusting it", () =
 		profiles: [],
 		defaultProfile: "",
 		features: { inventory: false, reviews: true },
+		dataFolder: "Character Info",
 	});
 	assert.deepEqual(normalizeSettings("junk"), {
 		profiles: [],
 		defaultProfile: "",
 		features: { inventory: false, reviews: true },
+		dataFolder: "Character Info",
 	});
 	const good = makeProfile("character", "Thorn", []);
 	const saved = normalizeSettings({
@@ -310,4 +316,61 @@ test("a region in the default state is never due, and 0 days turns reviews off",
 test("older saved profiles get the default review period", () => {
 	const { reviewAfterDays: _omit, ...old } = makeProfile("body", "Old", []);
 	assert.equal(normalizeSettings({ profiles: [old] }).profiles[0]?.reviewAfterDays, 30);
+});
+
+test("a data folder is kept as a clean vault path, and the root is the empty string", () => {
+	assert.equal(normalizeFolder(" Notes / Hidden/ "), "Notes/Hidden");
+	assert.equal(normalizeFolder("/a//b/"), "a/b");
+	assert.equal(normalizeFolder("a\\b"), "a/b");
+	assert.equal(normalizeFolder("../outside/./x"), "outside/x");
+	assert.equal(normalizeFolder("/"), "");
+	assert.equal(dataPathFor("Hidden/Character Info", "Me"), "Hidden/Character Info/Me.md");
+	assert.equal(dataPathFor("", "Me"), "Me.md");
+	assert.equal(makeProfile("body", "Me", [], "6 - Other/CI").dataPath, "6 - Other/CI/Me.md");
+	assert.equal(makeProfile("body", "Me", []).dataPath, "Character Info/Me.md");
+});
+
+test("saved settings keep their data folder, and older saves get the default", () => {
+	assert.equal(normalizeSettings({}).dataFolder, "Character Info");
+	assert.equal(normalizeSettings({ dataFolder: "/Hidden/CI/" }).dataFolder, "Hidden/CI");
+	assert.equal(normalizeSettings({ dataFolder: "" }).dataFolder, "");
+	assert.equal(normalizeSettings({ dataFolder: 3 }).dataFolder, "Character Info");
+});
+
+test("profiles follow a data note, or a folder of them, that was moved", () => {
+	const me = makeProfile("body", "Me", []);
+	const thorn = makeProfile("character", "Thorn", []);
+	const elsewhere = { ...makeProfile("character", "Ruiz", []), dataPath: "Other/Ruiz.md" };
+	const list = [me, thorn, elsewhere];
+	assert.equal(followRename(list, "Character Info/Me.md", "Hidden/Me.md"), true);
+	assert.equal(me.dataPath, "Hidden/Me.md");
+	assert.equal(followRename(list, "Character Info", "Hidden/Characters"), true);
+	assert.equal(thorn.dataPath, "Hidden/Characters/Thorn.md");
+	assert.equal(elsewhere.dataPath, "Other/Ruiz.md");
+	assert.equal(followRename(list, "Character Info Old", "X"), false);
+	assert.equal(
+		followRename(list, "Other/Ruiz", "Other/Mira"),
+		false,
+		"a prefix that is not a folder is not a match",
+	);
+});
+
+test("changing the data folder moves only the notes that were in the old one", () => {
+	const me = makeProfile("body", "Me", []);
+	const kept = { ...makeProfile("character", "Ruiz", []), dataPath: "Other/Ruiz.md" };
+	const moves = folderMoves([me, kept], "Character Info", "/Hidden/CI/");
+	assert.deepEqual(
+		moves.map((m) => [m.profile.name, m.target]),
+		[["Me", "Hidden/CI/Me.md"]],
+	);
+	assert.deepEqual(
+		folderMoves([me], "Character Info", "").map((m) => m.target),
+		["Me.md"],
+	);
+	assert.deepEqual(folderMoves([me], "Character Info", "Character Info/"), []);
+	const root = { ...me, dataPath: "Me.md" };
+	assert.deepEqual(
+		folderMoves([root], "", "CI").map((m) => m.target),
+		["CI/Me.md"],
+	);
 });

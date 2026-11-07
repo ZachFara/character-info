@@ -33,6 +33,8 @@ export interface PluginSettings {
 	defaultProfile: string;
 	/** Optional features, switched on or off in settings. The inventory starts off, reviews start on. */
 	features: { inventory: boolean; reviews: boolean };
+	/** Where new data notes go, relative to the vault root. "" is the root itself. */
+	dataFolder: string;
 }
 
 export type ItemKind = "weapon" | "armor" | "gear";

@@ -116,6 +116,8 @@ regions:
 ---
 ```
 
+To keep them somewhere else, such as a hidden folder, set **Settings, Character Info, Data folder** and press **Move**. The data notes in the old folder move with it, and links to them are updated. You can also move or rename a single data note yourself, and its profile follows it.
+
 The plugin never connects to the internet and stores nothing outside your vault.
 
 ## Your own figure

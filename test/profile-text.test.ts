@@ -298,3 +298,17 @@ test("map can name an SVG file, keeping its case, and an unknown name suggests o
 	assert.equal(resolve("profile: Kael\nmap: Maps/Kael.svg").profile.map, "Maps/Kael.svg");
 	assert.match(failure("profile: Kael\nmap: giant"), /path of an SVG file/);
 });
+
+test("a redefined profile keeps its data note wherever it was moved", () => {
+	const moved = { ...makeProfile("character", "Thorn", []), dataPath: "Hidden/Thorn.md" };
+	assert.equal(
+		resolve("profile: Thorn\ntemplate: character\nadd: Tail", moved).profile.dataPath,
+		"Hidden/Thorn.md",
+	);
+});
+
+test("a new profile defined by a block goes in the data folder it is given", () => {
+	const result = resolveDefinition(parseBlock("profile: Mira\ntemplate: character"), undefined, "Hidden/CI");
+	if (!result.ok) assert.fail(result.error);
+	assert.equal(result.profile.dataPath, "Hidden/CI/Mira.md");
+});

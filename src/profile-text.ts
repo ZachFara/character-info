@@ -172,11 +172,12 @@ function applyRegions(profile: Profile, block: Record<string, string>, warnings:
 /**
  * Resolves a defining block into a profile. The block is the source of truth: the profile is
  * rebuilt from its template every time, so removing a line removes its effect. An existing
- * registry entry only lends its id, so stored data stays attached.
+ * registry entry lends its id and data note path, so stored data stays attached wherever it lives.
  */
 export function resolveDefinition(
 	block: Record<string, string>,
 	existing: Profile | undefined,
+	folder?: string,
 ): ResolveResult {
 	const name = nonEmpty(block.profile);
 	if (!name) return { ok: false, error: "Add a line like “profile: Thorn” to this block." };
@@ -184,8 +185,12 @@ export function resolveDefinition(
 	if (!isTemplateKey(template)) {
 		return { ok: false, error: `Unknown template “${template}”. Use ${Object.keys(TEMPLATES).join(", ")}.` };
 	}
-	const profile = makeProfile(template, name, []);
-	if (existing) profile.id = existing.id;
+	const profile = makeProfile(template, name, [], folder);
+	// A profile keeps its id and its data note, wherever that note has been moved to.
+	if (existing) {
+		profile.id = existing.id;
+		profile.dataPath = existing.dataPath;
+	}
 	const rawMap = nonEmpty(block.map);
 	const map = isSvgPath(rawMap) ? rawMap : rawMap.toLowerCase();
 	if (map && !isSvgPath(map) && !(map in MAPS)) {

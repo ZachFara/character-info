@@ -226,6 +226,59 @@ type StoredProfile = Omit<Profile, "template" | "reviewAfterDays"> & {
 	reviewAfterDays?: unknown;
 };
 
+/** Where data notes go when settings do not say. */
+export const DEFAULT_DATA_FOLDER = "Character Info";
+
+/** A folder as settings keep it: forward slashes, no empty, "." or ".." parts. "" is the vault root. */
+export function normalizeFolder(raw: string): string {
+	return raw
+		.replace(/\\/g, "/")
+		.split("/")
+		.map((part) => part.trim())
+		.filter((part) => part !== "" && part !== "." && part !== "..")
+		.join("/");
+}
+
+/** The data note path for a profile name in a folder. */
+export function dataPathFor(folder: string, name: string): string {
+	const f = normalizeFolder(folder);
+	return f ? `${f}/${name}.md` : `${name}.md`;
+}
+
+function folderOf(path: string): string {
+	const at = path.lastIndexOf("/");
+	return at < 0 ? "" : path.slice(0, at);
+}
+
+/** Points profiles at a data note, or a folder of them, that moved. Says whether any changed. */
+export function followRename(profiles: Profile[], oldPath: string, newPath: string): boolean {
+	let changed = false;
+	for (const p of profiles) {
+		const inside = p.dataPath.startsWith(`${oldPath}/`);
+		if (p.dataPath !== oldPath && !inside) continue;
+		p.dataPath = inside ? newPath + p.dataPath.slice(oldPath.length) : newPath;
+		changed = true;
+	}
+	return changed;
+}
+
+/** Where each data note in the old folder goes when the data folder changes. Notes kept elsewhere stay. */
+export function folderMoves(
+	profiles: Profile[],
+	from: string,
+	to: string,
+): { profile: Profile; target: string }[] {
+	const source = normalizeFolder(from);
+	const dest = normalizeFolder(to);
+	if (source === dest) return [];
+	return profiles
+		.filter((p) => folderOf(p.dataPath) === source)
+		.map((p) => {
+			const file = p.dataPath.slice(p.dataPath.lastIndexOf("/") + 1);
+			return { profile: p, target: dest ? `${dest}/${file}` : file };
+		});
+}
+
 /** Days before a changed region asks to be reviewed, for profiles that do not say. */
 export const DEFAULT_REVIEW_DAYS = 30;
 
@@ -264,6 +317,7 @@ export function normalizeSettings(raw: unknown): PluginSettings {
 			inventory: asRecord(r.features).inventory === true,
 			reviews: asRecord(r.features).reviews !== false,
 		},
+		dataFolder: typeof r.dataFolder === "string" ? normalizeFolder(r.dataFolder) : DEFAULT_DATA_FOLDER,
 	};
 }
 

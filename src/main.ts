@@ -6,7 +6,15 @@ import {
 	normalizePath,
 	type MarkdownPostProcessorContext,
 } from "obsidian";
-import { applyEdit, applyInventory, normalizeSettings, parseBlock } from "./data.ts";
+import {
+	DEFAULT_DATA_FOLDER,
+	applyEdit,
+	applyInventory,
+	followRename,
+	normalizeSettings,
+	parseBlock,
+} from "./data.ts";
+import { ensureDataFile, frontmatterFor, moveDataFolder } from "./data-notes.ts";
 import {
 	addRegionLine,
 	isDefinition,
@@ -35,6 +43,7 @@ export default class CharacterInfoPlugin extends Plugin {
 		profiles: [],
 		defaultProfile: "",
 		features: { inventory: false, reviews: true },
+		dataFolder: DEFAULT_DATA_FOLDER,
 	};
 	/** Party blocks listen here so a profile added or forgotten anywhere updates them. */
 	private readonly registryListeners = new Set<() => void>();
@@ -51,8 +60,13 @@ export default class CharacterInfoPlugin extends Plugin {
 					this.notifyRegistry();
 				},
 				openDataNote: async (profile) => {
-					const file = await this.ensureDataFile(profile);
+					const file = await ensureDataFile(this.app, profile);
 					await this.app.workspace.getLeaf(false).openFile(file);
+				},
+				moveDataFolder: async (folder) => {
+					const blocked = await moveDataFolder(this.app, this.settings, folder);
+					this.saveAndNotify();
+					return blocked;
 				},
 			}),
 		);
@@ -68,6 +82,18 @@ export default class CharacterInfoPlugin extends Plugin {
 				if (this.svgMaps.delete(file.path)) this.notifyRegistry();
 			}),
 		);
+		// A data note moved or renamed by hand, or a folder of them, keeps working.
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				if (followRename(this.settings.profiles, oldPath, file.path)) this.saveAndNotify();
+			}),
+		);
+	}
+
+	private saveAndNotify(): void {
+		void this.saveSettings().then(() => {
+			this.notifyRegistry();
+		});
 	}
 
 	/** The SVG file a profile's map names, found by path or like a link from the note showing it. */
@@ -140,7 +166,7 @@ export default class CharacterInfoPlugin extends Plugin {
 				members,
 				sourcePath: ctx.sourcePath,
 				component: child,
-				getFrontmatter: (profile) => this.frontmatterFor(profile),
+				getFrontmatter: (profile) => frontmatterFor(this.app, profile),
 				save: (profile, regionId, patch) => this.saveRegion(profile, regionId, patch),
 				saveInventory: (profile) => this.inventorySaver(profile),
 				mapFor: (profile) => this.loadedMap(profile, ctx.sourcePath)?.map,
@@ -210,7 +236,7 @@ export default class CharacterInfoPlugin extends Plugin {
 			profile,
 			sourcePath: ctx.sourcePath,
 			component: child,
-			getFrontmatter: () => this.frontmatterFor(profile),
+			getFrontmatter: () => frontmatterFor(this.app, profile),
 			save: (regionId, patch) => this.saveRegion(profile, regionId, patch),
 			saveInventory: this.inventorySaver(profile),
 			addRegion: this.regionAdder(block, el, ctx, profile),
@@ -240,7 +266,7 @@ export default class CharacterInfoPlugin extends Plugin {
 		}
 		const existing = this.findProfile(name, true);
 		if (isDefinition(block)) {
-			const result = resolveDefinition(block, existing ?? undefined);
+			const result = resolveDefinition(block, existing ?? undefined, this.settings.dataFolder);
 			if (!result.ok) {
 				drawNotice(el, result.error);
 				return null;
@@ -288,7 +314,7 @@ export default class CharacterInfoPlugin extends Plugin {
 					new Notice("Character Info: write a block with a profile line first.");
 					return;
 				}
-				const file = await this.ensureDataFile(profile);
+				const file = await ensureDataFile(this.app, profile);
 				await this.app.workspace.getLeaf(false).openFile(file);
 			},
 		});
@@ -318,29 +344,11 @@ export default class CharacterInfoPlugin extends Plugin {
 		if (at >= 0) list[at] = profile;
 		else list.push(profile);
 		if (!this.settings.defaultProfile) this.settings.defaultProfile = profile.id;
-		void this.saveSettings().then(() => {
-			this.notifyRegistry();
-		});
+		this.saveAndNotify();
 	}
 
 	private createProfile(name: string, template: TemplateKey): void {
-		this.registerProfile(makeProfile(template, name, this.settings.profiles));
-	}
-
-	private frontmatterFor(profile: Profile): Frontmatter {
-		const file = this.app.vault.getAbstractFileByPath(normalizePath(profile.dataPath));
-		if (!(file instanceof TFile)) return {};
-		const fm: Frontmatter | undefined = this.app.metadataCache.getFileCache(file)?.frontmatter;
-		return fm ?? {};
-	}
-
-	private async ensureDataFile(profile: Profile): Promise<TFile> {
-		const path = normalizePath(profile.dataPath);
-		const existing = this.app.vault.getAbstractFileByPath(path);
-		if (existing instanceof TFile) return existing;
-		const folder = path.split("/").slice(0, -1).join("/");
-		if (folder && !this.app.vault.getAbstractFileByPath(folder)) await this.app.vault.createFolder(folder);
-		return this.app.vault.create(path, `---\ncharacter-info-profile: ${profile.name}\nregions: {}\n---\n`);
+		this.registerProfile(makeProfile(template, name, this.settings.profiles, this.settings.dataFolder));
 	}
 
 	/**
@@ -384,7 +392,7 @@ export default class CharacterInfoPlugin extends Plugin {
 		if (!this.settings.features.inventory) return null;
 		return async (items) => {
 			try {
-				const file = await this.ensureDataFile(profile);
+				const file = await ensureDataFile(this.app, profile);
 				await this.app.fileManager.processFrontMatter(file, (fm: Frontmatter) => {
 					applyInventory(fm, items);
 				});
@@ -397,7 +405,7 @@ export default class CharacterInfoPlugin extends Plugin {
 
 	private async saveRegion(profile: Profile, regionId: string, patch: RegionPatch): Promise<void> {
 		try {
-			const file = await this.ensureDataFile(profile);
+			const file = await ensureDataFile(this.app, profile);
 			await this.app.fileManager.processFrontMatter(file, (fm: Frontmatter) => {
 				applyEdit(fm, profile, regionId, patch);
 			});

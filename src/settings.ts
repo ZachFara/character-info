@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, type App, type Plugin } from "obsidian";
+import { Notice, PluginSettingTab, Setting, type App, type Plugin } from "obsidian";
 import type { PluginSettings, Profile } from "./types.ts";
 
 /** What the settings tab needs from the plugin. `settings` is edited in place. */
@@ -6,6 +6,8 @@ export interface SettingsActions {
 	settings: PluginSettings;
 	save: () => Promise<void>;
 	openDataNote: (profile: Profile) => Promise<void>;
+	/** Sets the data folder and moves the notes in the old one. Resolves to how many could not move. */
+	moveDataFolder: (folder: string) => Promise<number>;
 }
 
 export class CharacterInfoSettingTab extends PluginSettingTab {
@@ -25,6 +27,7 @@ export class CharacterInfoSettingTab extends PluginSettingTab {
 		});
 		this.drawFeatures();
 		this.drawReviews();
+		this.drawDataFolder();
 		this.drawDefaultProfile();
 		new Setting(this.containerEl).setName("Profiles").setHeading();
 		const { profiles } = this.actions.settings;
@@ -63,6 +66,30 @@ export class CharacterInfoSettingTab extends PluginSettingTab {
 				t.setValue(s.features.reviews).onChange(async (v) => {
 					s.features.reviews = v;
 					await this.actions.save();
+				}),
+			);
+	}
+
+	private drawDataFolder(): void {
+		let value = this.actions.settings.dataFolder;
+		new Setting(this.containerEl)
+			.setName("Data folder")
+			.setDesc(
+				"Where each profile's data note lives. Moving the folder moves the notes in it. You can also move a data note yourself and the profile follows it. Leave empty for the vault root.",
+			)
+			.addText((t) =>
+				t.setValue(value).onChange((v) => {
+					value = v;
+				}),
+			)
+			.addButton((b) =>
+				b.setButtonText("Move").onClick(async () => {
+					const blocked = await this.actions.moveDataFolder(value);
+					if (blocked)
+						new Notice(
+							`Character Info: ${String(blocked)} data notes stayed put, a note with the same name is already there.`,
+						);
+					this.display();
 				}),
 			);
 	}

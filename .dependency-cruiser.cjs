@@ -9,6 +9,7 @@
 //   profile-text  block text to profile: imports types, data, presets only
 //   render    the figure and card: imports obsidian, data, presets, types
 //   settings  the settings tab: imports obsidian, data, presets, types
+//   data-notes  reads, creates and moves data notes in the vault: imports obsidian, data, types
 //   new-profile  the new profile dialog: imports obsidian, presets, profile-text
 //   party     several profiles side by side: imports obsidian, render, data, types
 //   inventory-view  the inventory panel: imports data, types; only render imports it

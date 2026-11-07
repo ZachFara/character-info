@@ -10,6 +10,7 @@
 //   new-profile  the new profile dialog: imports obsidian, presets, profile-text
 //   party     several profiles side by side: imports obsidian, render, data, types
 //   inventory-view  the inventory panel: imports data, types; only render imports it
+//   card-actions  controls drawn on the card: imports types; only render imports it
 //   main      the only module that wires the others together
 const PURE = "^src/(types|data|presets|profile-text|kits)\\.ts$";
 
@@ -46,7 +47,7 @@ module.exports = {
 		{
 			name: "ui-modules-do-not-import-each-other",
 			severity: "error",
-			from: { path: "^src/(render|settings|new-profile|inventory-view)\\.ts$" },
+			from: { path: "^src/(render|settings|new-profile|inventory-view|card-actions)\\.ts$" },
 			to: { path: "^src/(render|settings|new-profile|party|main)\\.ts$" },
 		},
 		{

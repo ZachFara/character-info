@@ -1,7 +1,9 @@
 import { MarkdownRenderer, type App, type Component } from "obsidian";
 import { TEMPLATES, getMap, type MapPreset, type TemplateKey } from "./presets.ts";
 import {
+	describeItem,
 	isUnknownStatus,
+	itemsOnRegion,
 	pickInitial,
 	readInventory,
 	readRegion,
@@ -236,7 +238,7 @@ export class CharacterInfoView {
 		card.style.setProperty("--ci-c", state.color);
 		this.drawCardTop(card, region, data, state);
 		if (this.editing) this.drawEditor(card, region, data, state);
-		else this.drawDetails(card, data);
+		else this.drawDetails(card, data, this.wornOn(region.id, fm));
 	}
 
 	private drawCardTop(card: HTMLElement, region: Region, data: RegionData, state: State): void {
@@ -264,13 +266,20 @@ export class CharacterInfoView {
 		}
 	}
 
-	private drawDetails(card: HTMLElement, data: RegionData): void {
+	/** Items worn or held on a region, as lines of text. Empty when the inventory feature is off. */
+	private wornOn(regionId: string, fm: Frontmatter): string[] {
+		if (!this.o.saveInventory) return [];
+		return itemsOnRegion(readInventory(fm), regionId).map(describeItem);
+	}
+
+	private drawDetails(card: HTMLElement, data: RegionData, worn: string[]): void {
 		if (data.note) this.markdown(card.createDiv({ cls: "ci-note" }), data.note);
+		this.drawList(card, "Worn and held", worn, "worn");
 		this.drawList(card, "Doing", data.doing, "doing");
 		this.drawList(card, "To fix", data.fix, "fix");
 		this.drawList(card, "Notes", data.links, "links");
 		this.drawHistory(card, data);
-		if (!data.note && !data.doing.length && !data.fix.length && !data.links.length) {
+		if (!data.note && !data.doing.length && !data.fix.length && !data.links.length && !worn.length) {
 			card.createDiv({ cls: "ci-empty", text: "Nothing logged yet." });
 		}
 	}

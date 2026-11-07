@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
 	applyEdit,
 	applyInventory,
+	describeItem,
 	isUnknownStatus,
+	itemsOnRegion,
 	normalizeSettings,
 	parseBlock,
 	pickInitial,
@@ -211,4 +213,15 @@ test("writing the inventory leaves out empty fields and removes the key when emp
 	assert.deepEqual(readInventory(fm), items);
 	applyInventory(fm, []);
 	assert.equal("inventory" in fm, false);
+});
+
+test("items on a region are those tied to it, and an item reads as one line", () => {
+	const sword: Item = { name: "Longsword", kind: "weapon", qty: 1, note: "Steel", region: "armR" };
+	const water: Item = { name: "Water", kind: "gear", qty: 3, note: "", region: null };
+	const dagger: Item = { name: "Dagger", kind: "weapon", qty: 1, note: "", region: "armR" };
+	assert.deepEqual(itemsOnRegion([sword, water, dagger], "armR"), [sword, dagger]);
+	assert.deepEqual(itemsOnRegion([sword, water], "head"), []);
+	assert.equal(describeItem(sword), "Longsword · Steel");
+	assert.equal(describeItem(water), "3× Water");
+	assert.equal(describeItem(dagger), "Dagger");
 });

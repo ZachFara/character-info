@@ -286,3 +286,26 @@ test("pressing Enter in the name box adds the item as carried gear by default", 
 	assert.ok(written);
 	assert.deepEqual(written[0], { name: "Rope", kind: "gear", qty: 1, note: "", region: null });
 });
+
+function pick(el: HTMLElement, region: string): void {
+	const chip = all(el, ".ci-chip").find((c) => c.textContent === region);
+	assert.ok(chip, `no chip ${region}`);
+	chip.click();
+}
+
+test("the card for a region lists what is worn or held there when the inventory is on", () => {
+	const { el } = mountInventory([SWORD, WATER, VEST]);
+	pick(el, "Right arm");
+	assert.equal(text(el, ".ci-sec.worn .ci-sec-title"), "Worn and held");
+	assert.equal(text(el, ".ci-sec.worn li"), "Longsword · Steel");
+	assert.equal(el.querySelector(".ci-empty"), null);
+});
+
+test("a region with nothing on it has no worn section, and the inventory being off hides it", () => {
+	const { el } = mountInventory([SWORD]);
+	pick(el, "Left leg");
+	assert.equal(el.querySelector(".ci-sec.worn"), null);
+	const off = mount(profile("character"), { inventory: [SWORD] });
+	pick(off, "Right arm");
+	assert.equal(off.querySelector(".ci-sec.worn"), null);
+});

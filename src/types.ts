@@ -24,6 +24,8 @@ export interface Profile {
 	defaultState: string;
 	regions: Region[];
 	dataPath: string;
+	/** Days before a region in a non-default state asks to be reviewed. 0 turns review badges off. */
+	reviewAfterDays: number;
 }
 
 export interface PluginSettings {
@@ -60,6 +62,8 @@ export interface RegionData {
 	fix: string[];
 	links: string[];
 	history: HistoryEntry[];
+	/** The last day the region was saved or marked reviewed, as YYYY-MM-DD, or null. */
+	reviewed: string | null;
 }
 
 /** The fields an edit may change. Absent fields are left alone. */
@@ -69,6 +73,8 @@ export interface RegionPatch {
 	doing?: string[];
 	fix?: string[];
 	links?: string[];
+	/** True for a save that changes nothing but the review date. Every save stamps that date anyway. */
+	reviewed?: boolean;
 }
 
 /** Frontmatter as Obsidian hands it over: untrusted until read through `readRegion`. */

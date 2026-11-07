@@ -4,14 +4,18 @@ import { armorMarkup } from "./armor-art.ts";
 import {
 	armorLooks,
 	describeItem,
+	isReviewDue,
 	isUnknownStatus,
 	itemsOnRegion,
+	lastTouched,
 	pickInitial,
 	readInventory,
 	readRegion,
 	resolveState,
 	tally,
 	toList,
+	today,
+	daysBetween,
 } from "./data.ts";
 import {
 	drawAddRegion,
@@ -42,6 +46,8 @@ export interface ViewOptions {
 	saveInventory: ((items: Item[]) => Promise<void>) | null;
 	/** Adds a region by writing it into the block text. Absent when this view's block cannot be edited. */
 	addRegion?: (name: string) => void;
+	/** Today as YYYY-MM-DD, for review badges. Tests pass a fixed day. */
+	today?: () => string;
 }
 
 /** Turns a trusted preset string like `<rect .../>` into SVG nodes. */
@@ -178,6 +184,11 @@ export class CharacterInfoView {
 		});
 	}
 
+	/** Whether a region is due a review today. */
+	private due(regionId: string, fm: Frontmatter): boolean {
+		return isReviewDue(this.o.profile, readRegion(fm, regionId), this.o.today?.() ?? today());
+	}
+
 	private select(id: string): void {
 		this.selected = id;
 		this.editing = false;
@@ -196,6 +207,8 @@ export class CharacterInfoView {
 			item.appendText(`${s.label} `);
 			item.createEl("b", { text: String(count) });
 		}
+		const dueCount = this.o.profile.regions.filter((r) => this.due(r.id, fm)).length;
+		if (dueCount) legend.createSpan({ cls: "ci-due-count", text: `${String(dueCount)} to review` });
 	}
 
 	/** Armor drawings for the inventory's worn pieces. Empty when the inventory is off or nothing has a drawing. */
@@ -240,7 +253,9 @@ export class CharacterInfoView {
 		const roster = side.createDiv({ cls: "ci-roster" });
 		for (const r of this.o.profile.regions) {
 			const s = resolveState(this.o.profile, readRegion(fm, r.id).status);
-			const chip = roster.createEl("button", { cls: "ci-chip" + (r.id === this.selected ? " is-sel" : "") });
+			const cls =
+				"ci-chip" + (r.id === this.selected ? " is-sel" : "") + (this.due(r.id, fm) ? " is-due" : "");
+			const chip = roster.createEl("button", { cls });
 			chip.style.setProperty("--ci-c", s.color);
 			chip.createEl("i", { cls: "ci-dot" });
 			chip.appendText(r.name);
@@ -304,8 +319,21 @@ export class CharacterInfoView {
 		if (this.editing) this.drawEditor(card, region, data, state);
 		else {
 			this.drawQuickStates(card, region, state);
+			if (this.due(region.id, fm)) this.drawReviewDue(card, region.id, data);
 			this.drawDetails(card, region.id, data, this.wornOn(region.id, fm));
 		}
+	}
+
+	/** A note that the region has not been looked at for a while, with a button to say it has. */
+	private drawReviewDue(card: HTMLElement, regionId: string, data: RegionData): void {
+		const row = card.createDiv({ cls: "ci-review" });
+		const last = lastTouched(data);
+		const on = this.o.today?.() ?? today();
+		const since = last === null ? "Never reviewed" : `Not reviewed in ${String(daysBetween(last, on))} days`;
+		row.createSpan({ cls: "ci-review-text", text: `Review due. ${since}.` });
+		row.createEl("button", { text: "Mark reviewed" }).addEventListener("click", () => {
+			void this.o.save(regionId, { reviewed: true });
+		});
 	}
 
 	/** One-click state change: the state buttons on the card itself, no Edit form needed. */

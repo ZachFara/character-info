@@ -2,7 +2,7 @@
 // A map is a set of SVG shapes keyed by region id. A profile only draws the shapes whose
 // region id it actually has, so deleting a region removes its shape. Regions with no shape
 // live in the chip roster under the figure.
-import { uniqueId } from "./data.ts";
+import { DEFAULT_REVIEW_DAYS, uniqueId } from "./data.ts";
 import type { Profile, Region, State } from "./types.ts";
 
 export interface MapPreset {
@@ -188,5 +188,6 @@ export function makeProfile(templateKey: TemplateKey, name: string, existing: Pr
 		defaultState: set.defaultState,
 		regions: clone(t.regions),
 		dataPath: `Character Info/${name}.md`,
+		reviewAfterDays: DEFAULT_REVIEW_DAYS,
 	};
 }

@@ -29,6 +29,8 @@ export function profile(key: keyof typeof TEMPLATES): Profile {
 		defaultState: set.defaultState,
 		regions: t.regions,
 		dataPath: "x.md",
+		// Off by default so the other tests do not depend on today's date. Review tests turn it on.
+		reviewAfterDays: 0,
 	};
 }
 

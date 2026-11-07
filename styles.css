@@ -604,3 +604,29 @@
 	justify-content: flex-end;
 	gap: var(--size-4-2);
 }
+
+/* Review badges: a region in a non-default state that has not been touched for a while. */
+.ci-due-count {
+	color: var(--text-warning);
+}
+.ci-chip.is-due::after {
+	content: "";
+	width: 6px;
+	height: 6px;
+	margin-left: var(--size-4-2);
+	border-radius: 50%;
+	border: 1.5px solid var(--text-warning);
+}
+.ci-review {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+	margin: 0 0 var(--size-4-3);
+	padding: var(--size-4-2) var(--size-4-3);
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+	color: var(--text-warning);
+	font-size: var(--font-ui-small);
+}

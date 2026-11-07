@@ -1,12 +1,12 @@
 // Turns the text of a character-info block into a profile. Pure logic, no Obsidian imports.
-import { slug, uniqueId } from "./data.ts";
+import { DEFAULT_REVIEW_DAYS, slug, uniqueId } from "./data.ts";
 import { MAPS, STATE_SETS, TEMPLATES, getMap, makeProfile, type TemplateKey } from "./presets.ts";
 import type { Profile, Region, State } from "./types.ts";
 
 export type ResolveResult = { ok: true; profile: Profile; warnings: string[] } | { ok: false; error: string };
 
 /** Keys that make a block a definition, as opposed to a plain reference by name. */
-const DEFINING_KEYS = ["template", "map", "add", "remove", "rename", "states", "default"] as const;
+const DEFINING_KEYS = ["template", "map", "add", "remove", "rename", "states", "default", "review"] as const;
 
 /** Colours handed out along a `states:` list, by how many states there are. */
 const GREEN = "#5aa469";
@@ -153,6 +153,13 @@ function applyStates(profile: Profile, block: Record<string, string>, warnings: 
 	return null;
 }
 
+/** Applies `review: 30`, the days before a changed region asks to be reviewed. 0 turns it off. */
+function applyReview(profile: Profile, text: string, warnings: string[]): void {
+	if (!text) return;
+	if (/^\d+$/.test(text)) profile.reviewAfterDays = Number(text);
+	else warnings.push(`review: expected a number of days, such as 30, not "${text}"`);
+}
+
 /** Applies `remove`, `rename` and `add` to the regions. */
 function applyRegions(profile: Profile, block: Record<string, string>, warnings: string[]): void {
 	const shapes = Object.keys(getMap(profile.map).shapes);
@@ -184,6 +191,7 @@ export function resolveDefinition(
 	if (map) profile.map = map;
 
 	const warnings: string[] = [];
+	applyReview(profile, nonEmpty(block.review), warnings);
 	applyRegions(profile, block, warnings);
 	const error = applyStates(profile, block, warnings);
 	return error === null ? { ok: true, profile, warnings } : { ok: false, error };
@@ -209,6 +217,8 @@ export function newProfileBlock(name: string, template: TemplateKey, mode: Block
 			"add:",
 			"remove:",
 			"rename:",
+			"# Days before a changed region asks to be reviewed. 0 turns review badges off.",
+			`# review: ${String(DEFAULT_REVIEW_DAYS)}`,
 			"# States, best first. The first is the default. Add =#hex to a state to set its colour.",
 			`# states: ${set.states.map((s) => s.label).join(", ")}`,
 			`# default: ${defaultLabel}`,

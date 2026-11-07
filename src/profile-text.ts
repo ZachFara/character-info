@@ -216,3 +216,36 @@ export function newProfileBlock(name: string, template: TemplateKey, mode: Block
 	}
 	return ["```character-info", ...lines, "```", ""].join("\n");
 }
+
+export interface PartyBlock {
+	title: string | null;
+	/** Profile names in the order written. */
+	names: string[];
+	/** True when the block says `all`, meaning every known profile. */
+	all: boolean;
+}
+
+/** Adds the names on one line to the party, noticing `all`. */
+function addPartyNames(party: PartyBlock, text: string): void {
+	for (const name of text.split(",").map((n) => n.trim())) {
+		if (name.toLowerCase() === "all") party.all = true;
+		else if (name) party.names.push(name);
+	}
+}
+
+/**
+ * Reads the text of a character-party block: an optional `title:` line, then profile names one
+ * per line or separated by commas. `all` means every known profile. A `profiles:` or `members:`
+ * prefix is accepted. Lines starting with # are comments.
+ */
+export function parsePartyBlock(source: string): PartyBlock {
+	const party: PartyBlock = { title: null, names: [], all: false };
+	for (const raw of source.split("\n")) {
+		const line = raw.trim();
+		if (!line || line.startsWith("#")) continue;
+		const title = /^title\s*:\s*(.*)$/i.exec(line);
+		if (title) party.title = (title[1] ?? "").trim() || null;
+		else addPartyNames(party, /^(?:profiles|members)\s*:\s*(.*)$/i.exec(line)?.[1] ?? line);
+	}
+	return party;
+}

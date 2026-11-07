@@ -121,6 +121,28 @@ export function pickInitial(profile: Profile, fm: Frontmatter | undefined): stri
 	return best?.id ?? profile.regions[0]?.id ?? null;
 }
 
+export interface ProfileSummary {
+	/** Non-default states that at least one region is in, in the profile's state order. */
+	problems: { state: State; count: number }[];
+	/** The region in the lowest non-default state, or null when everything is in the default state. */
+	worst: { region: Region; state: State } | null;
+}
+
+/** A short picture of a profile for a party tile: what is wrong and what is worst. */
+export function summarizeProfile(profile: Profile, fm: Frontmatter | undefined): ProfileSummary {
+	const counts = tally(profile, fm);
+	const problems = profile.states
+		.filter((s) => s.id !== profile.defaultState && (counts[s.id] ?? 0) > 0)
+		.map((state) => ({ state, count: counts[state.id] ?? 0 }));
+	let worst: ProfileSummary["worst"] = null;
+	for (const region of profile.regions) {
+		const state = resolveState(profile, readRegion(fm, region.id).status);
+		if (state.id !== profile.defaultState && (!worst || state.pips < worst.state.pips))
+			worst = { region, state };
+	}
+	return { problems, worst };
+}
+
 function isEmpty(value: unknown): boolean {
 	return value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
 }

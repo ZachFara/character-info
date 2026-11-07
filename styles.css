@@ -309,3 +309,78 @@
 	gap: var(--size-4-2);
 	margin-top: var(--size-4-2);
 }
+
+/* Party: several profiles side by side. */
+.ci-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+	gap: var(--size-4-3);
+}
+.ci-tile {
+	display: flex;
+	gap: var(--size-4-3);
+	padding: var(--size-4-3);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	cursor: pointer;
+}
+.ci-tile:hover {
+	border-color: var(--background-modifier-border-hover);
+	background: var(--background-modifier-hover);
+}
+.ci-tile:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}
+.ci-tile.is-missing {
+	cursor: default;
+	border-style: dashed;
+	background: transparent;
+}
+.ci-mini {
+	flex: none;
+	width: 48px;
+}
+.ci-mini svg {
+	width: 100%;
+	height: auto;
+	display: block;
+}
+.ci-mini .ci-region {
+	pointer-events: none;
+}
+.ci-tile-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+	min-width: 0;
+}
+.ci-tile-name {
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-medium);
+}
+.ci-tile-worst {
+	display: flex;
+	align-items: baseline;
+	color: var(--ci-c);
+	font-size: var(--font-ui-small);
+}
+.ci-tile-counts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-1) var(--size-4-3);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+.ci-tile-counts b {
+	color: var(--text-normal);
+}
+.ci-tile-note {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+.ci-party-focus .ci-back {
+	margin-bottom: var(--size-4-2);
+	font-size: var(--font-ui-smaller);
+}

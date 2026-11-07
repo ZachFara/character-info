@@ -32,6 +32,50 @@ function svgGroup(className: string, markup: string[]): SVGGElement {
 	return g;
 }
 
+/**
+ * The figure: a neutral silhouette, then one group per drawn region. Regions in the default state
+ * stay neutral so colour lands only on regions that need attention. `decorate` lets the caller
+ * add behaviour to each region.
+ */
+function figureSvg(
+	profile: Profile,
+	map: MapPreset,
+	fm: Frontmatter,
+	selected: string | null,
+	decorate?: (g: SVGGElement, region: Region) => void,
+): SVGSVGElement {
+	const svg = activeDocument.createElementNS(SVG_NS, "svg");
+	svg.setAttribute("viewBox", map.viewBox);
+	svg.setAttribute("role", "img");
+	svg.setAttribute("aria-label", `${profile.name}, regions coloured by state`);
+	const drawn = profile.regions.filter((r) => map.shapes[r.id] !== undefined);
+	svg.appendChild(
+		svgGroup(
+			"ci-silhouette",
+			drawn.map((r) => map.shapes[r.id] ?? ""),
+		),
+	);
+	for (const r of drawn) {
+		const state = resolveState(profile, readRegion(fm, r.id).status);
+		const neutral = state.id === profile.defaultState;
+		const cls = "ci-region" + (neutral ? " is-default" : "") + (r.id === selected ? " is-sel" : "");
+		const g = svgGroup(cls, [map.shapes[r.id] ?? ""]);
+		g.dataset.region = r.id;
+		if (!neutral) g.style.setProperty("--ci-c", state.color);
+		decorate?.(g, r);
+		svg.appendChild(g);
+	}
+	return svg;
+}
+
+/** A small, non-interactive figure for party tiles. Draws nothing when the profile has no map. */
+export function drawMiniFigure(parent: HTMLElement, profile: Profile, fm: Frontmatter): void {
+	const map = getMap(profile.map);
+	if (!profile.regions.some((r) => map.shapes[r.id] !== undefined)) return;
+	const fig = parent.createDiv({ cls: "ci-mini" });
+	fig.appendChild(figureSvg(profile, map, fm, null));
+}
+
 /** A warning or hint in the same card style, used when a block cannot be drawn. */
 export function drawNotice(el: HTMLElement, text: string): void {
 	el.empty();
@@ -110,43 +154,20 @@ export class CharacterInfoView {
 	}
 
 	private drawFigure(grid: HTMLElement, fm: Frontmatter): void {
-		const { profile } = this.o;
 		const fig = grid.createEl("figure", { cls: "ci-fig" });
-		const svg = activeDocument.createElementNS(SVG_NS, "svg");
-		svg.setAttribute("viewBox", this.map.viewBox);
-		svg.setAttribute("role", "img");
-		svg.setAttribute("aria-label", `${profile.name}, regions coloured by state`);
-		fig.appendChild(svg);
-
-		const drawn = profile.regions.filter((r) => this.map.shapes[r.id] !== undefined);
-		svg.appendChild(
-			svgGroup(
-				"ci-silhouette",
-				drawn.map((r) => this.map.shapes[r.id] ?? ""),
-			),
-		);
 		const caption = fig.createEl("figcaption", { text: HINT });
-		for (const r of drawn) svg.appendChild(this.regionShape(r, fm, caption));
-	}
-
-	private regionShape(r: Region, fm: Frontmatter, caption: HTMLElement): SVGGElement {
-		const state = resolveState(this.o.profile, readRegion(fm, r.id).status);
-		// The default state is drawn neutral so colour lands only on regions that need attention.
-		const neutral = state.id === this.o.profile.defaultState;
-		const cls = "ci-region" + (neutral ? " is-default" : "") + (r.id === this.selected ? " is-sel" : "");
-		const g = svgGroup(cls, [this.map.shapes[r.id] ?? ""]);
-		g.dataset.region = r.id;
-		if (!neutral) g.style.setProperty("--ci-c", state.color);
-		g.addEventListener("click", () => {
-			this.select(r.id);
+		const svg = figureSvg(this.o.profile, this.map, fm, this.selected, (g, r) => {
+			g.addEventListener("click", () => {
+				this.select(r.id);
+			});
+			g.addEventListener("mouseenter", () => {
+				caption.textContent = r.name;
+			});
+			g.addEventListener("mouseleave", () => {
+				caption.textContent = HINT;
+			});
 		});
-		g.addEventListener("mouseenter", () => {
-			caption.textContent = r.name;
-		});
-		g.addEventListener("mouseleave", () => {
-			caption.textContent = HINT;
-		});
-		return g;
+		fig.insertBefore(svg, caption);
 	}
 
 	private drawRoster(side: HTMLElement, fm: Frontmatter): void {

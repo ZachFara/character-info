@@ -1,13 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { build } from "esbuild";
-import { JSDOM } from "jsdom";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { createRequire } from "node:module";
 import type { Component } from "obsidian";
-import { installDomHelpers } from "./obsidian-stub.ts";
+import { loadModule } from "./harness.ts";
 import { STATE_SETS, TEMPLATES } from "../src/presets.ts";
 import type {
 	CharacterInfoView as ViewClass,
@@ -18,30 +12,11 @@ import type {
 import type { TemplateKey } from "../src/presets.ts";
 import type { Frontmatter, Profile, RegionPatch } from "../src/types.ts";
 
-// Bundle render.ts with `obsidian` pointed at the stub, then import it under jsdom.
-const out = join(mkdtempSync(join(tmpdir(), "character-info-")), "render.cjs");
-await build({
-	entryPoints: ["src/render.ts"],
-	bundle: true,
-	format: "cjs",
-	outfile: out,
-	logLevel: "silent",
-	alias: { obsidian: new URL("./obsidian-stub.ts", import.meta.url).pathname },
-});
-
-const dom = new JSDOM("<!doctype html><body></body>");
-Object.assign(globalThis, {
-	window: dom.window,
-	document: dom.window.document,
-	activeDocument: dom.window.document,
-	DOMParser: dom.window.DOMParser,
-});
-installDomHelpers(dom.window as unknown as Window & typeof globalThis);
-const mod = createRequire(import.meta.url)(out) as {
+const mod = await loadModule<{
 	CharacterInfoView: typeof ViewClass;
 	drawCreatePrompt: typeof drawCreatePromptFn;
 	drawNotice: typeof drawNoticeFn;
-};
+}>("src/render.ts");
 
 function profile(key: keyof typeof TEMPLATES): Profile {
 	const t = TEMPLATES[key];

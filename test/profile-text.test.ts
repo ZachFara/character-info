@@ -1,7 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseBlock } from "../src/data.ts";
-import { isDefinition, newProfileBlock, resolveDefinition, type ResolveResult } from "../src/profile-text.ts";
+import {
+	isDefinition,
+	newProfileBlock,
+	parsePartyBlock,
+	resolveDefinition,
+	type ResolveResult,
+} from "../src/profile-text.ts";
 import { TEMPLATES, makeProfile, type TemplateKey } from "../src/presets.ts";
 import type { Profile } from "../src/types.ts";
 
@@ -220,4 +226,25 @@ test("uncommenting the states and default lines in a full block changes the prof
 	const { profile } = resolve(text);
 	assert.equal(profile.states[0]?.label, "Fine");
 	assert.equal(profile.defaultState, "fine");
+});
+
+test("a party block lists names one per line or separated by commas", () => {
+	assert.deepEqual(parsePartyBlock("Thorn\nMira\nKestrel"), {
+		title: null,
+		names: ["Thorn", "Mira", "Kestrel"],
+		all: false,
+	});
+	assert.deepEqual(parsePartyBlock("Thorn, Mira ,Kestrel").names, ["Thorn", "Mira", "Kestrel"]);
+});
+
+test("a party block can have a title, comments, a members prefix and all", () => {
+	const party = parsePartyBlock("title: The Company\n# who is in\nmembers: Thorn, Mira\nKestrel");
+	assert.equal(party.title, "The Company");
+	assert.deepEqual(party.names, ["Thorn", "Mira", "Kestrel"]);
+	assert.equal(party.all, false);
+	assert.equal(parsePartyBlock("all").all, true);
+	assert.equal(parsePartyBlock("ALL, Thorn").all, true);
+	assert.deepEqual(parsePartyBlock("ALL, Thorn").names, ["Thorn"]);
+	assert.deepEqual(parsePartyBlock(""), { title: null, names: [], all: false });
+	assert.equal(parsePartyBlock("title:").title, null);
 });

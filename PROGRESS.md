@@ -31,7 +31,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T6d. Starter kits.** Done: a kit row adds a modern soldier loadout, a medieval knight, or the original Gravethorn dark fantasy warplate, placed on the regions the profile has and never duplicating a piece. The naming rule is decision 0011. Checked in real Obsidian.
 - [x] **T6e. Armor on the figure.** Done: kit armor carries a look, drawn as hand-made SVG over a neutral body in an Armor view. A Body / Armor switch appears only when drawable armor is worn. Two sets: modern military and Gravethorn. The figure now uses the padded, outlined style of the owner's original body note. Checked in real Obsidian. See decision 0012.
 - [x] **T14. Edit inventory items.** Done: a pencil on each item opens an inline form for name, note, kind, region and, for armor, the drawing shown on the figure. Checked in real Obsidian.
-- [x] **T7. Custom SVG maps.** Done as text: `map: Maps/ship.svg` in the block. Shapes with an id become regions, named from data-name, a title or the id. The file is sanitized to plain shapes and geometry, reloads when it changes, and gives a profile with no regions one per shape. Checked in real Obsidian. See decision 0013.
+- [x] **T7. Custom SVG maps.** Done as text: `map: Maps/kael.svg` (any SVG) in the block. Shapes with an id become regions, named from data-name, a title or the id. The file is sanitized to plain shapes and geometry, reloads when it changes, and gives a profile with no regions one per shape. Checked in real Obsidian. See decision 0013.
 - [ ] **T9. Real-Obsidian check script.** Done when a committed script starts an isolated Obsidian with the test vault and returns screenshots and results, and a decision record covers it.
 - [ ] **T8. Release prep.** Done when a tag builds `main.js`, `manifest.json` and `styles.css` in CI, the README has screenshots, and the community plugin checklist is satisfied.
 - [x] **T13. List indent in the card.** Done: card lists use a small dot aligned with the section title.
@@ -43,6 +43,7 @@ Made to keep work moving. Each is cheap to change.
 - **Profiles are text in the block.** The block text defines a profile and settings only list them. See decision 0009. The older settings editor is retired in T10c.
 - **Inventory** is a global switch in settings, off by default. Items live in the profile's data note as `inventory:` entries with a name, a quantity and an optional region.
 - **Review badges** use a number of days per profile, default 30, 0 to turn off. Any save counts as a review.
+- **People first.** The built-in figures, templates and the top of the README are about people: the owner's body and tabletop characters. Other figures, such as a ship, appear only as examples of custom SVG maps, low in the README, and nothing like that is installed with the plugin.
 - **State names stay humane.** People use this for their own health, so state labels avoid words like "maimed". The wounds set runs Healthy, Bruised, Wounded, Severe, Lost.
 - **Minimum Obsidian version** is 1.5.1, the version that added the modal title the new-profile dialog uses.
 

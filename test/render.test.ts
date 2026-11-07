@@ -56,7 +56,7 @@ test("the selected region is marked on the figure", () => {
 test("a profile with a map uses the two-column layout and one without uses the full width", () => {
 	const withMap = mount(profile("body"), {});
 	assert.equal(must(withMap, ".ci-grid").classList.contains("ci-no-map"), false);
-	const noMap: Profile = { ...profile("blank"), regions: [{ id: "engine", name: "Engine" }] };
+	const noMap: Profile = { ...profile("blank"), regions: [{ id: "tail", name: "Tail" }] };
 	assert.equal(must(mount(noMap, {}), ".ci-grid").classList.contains("ci-no-map"), true);
 });
 
@@ -297,12 +297,12 @@ test("a non-default region that was never reviewed says so", () => {
 
 test("a view given a map from an SVG file draws that map's shapes and offers no armor view", () => {
 	const el = document.body.appendChild(document.createElement("div"));
-	const shipMap = {
-		label: "Ship",
-		viewBox: "0 0 200 100",
+	const kaelMap = {
+		label: "Kael",
+		viewBox: "0 0 100 220",
 		shapes: {
-			hull: '<rect x="0" y="50" width="200" height="40"/>',
-			engine: '<circle cx="20" cy="40" r="8"/>',
+			head: '<circle cx="50" cy="25" r="18"/>',
+			left_wing: '<path d="M60 60 L98 40 L70 110 Z"/>',
 		},
 	};
 	new mod.CharacterInfoView({
@@ -310,10 +310,10 @@ test("a view given a map from an SVG file draws that map's shapes and offers no 
 		el,
 		profile: {
 			...profile("blank"),
-			map: "ship.svg",
+			map: "kael.svg",
 			regions: [
-				{ id: "hull", name: "Hull" },
-				{ id: "engine", name: "Engine" },
+				{ id: "head", name: "Head" },
+				{ id: "left_wing", name: "Left wing" },
 			],
 		},
 		sourcePath: "x.md",
@@ -321,9 +321,9 @@ test("a view given a map from an SVG file draws that map's shapes and offers no 
 		getFrontmatter: () => ({ inventory: [{ name: "Helm", kind: "armor", look: "gravethorn:helm" }] }),
 		save: () => Promise.resolve(),
 		saveInventory: () => Promise.resolve(),
-		map: shipMap,
+		map: kaelMap,
 	}).draw();
-	assert.equal(must(el, ".ci-fig svg").getAttribute("viewBox"), "0 0 200 100");
+	assert.equal(must(el, ".ci-fig svg").getAttribute("viewBox"), "0 0 100 220");
 	assert.equal(all(el, ".ci-region").length, 2);
 	assert.equal(el.querySelector(".ci-viewtoggle"), null);
 });

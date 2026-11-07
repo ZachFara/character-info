@@ -96,7 +96,7 @@ export function parseSvgMap(text: string, label: string): SvgMapResult {
 	if (!Object.keys(shapes).length) {
 		return {
 			ok: false,
-			error: 'No shapes with an id. Give each part of the drawing an id, such as id="engine".',
+			error: 'No shapes with an id. Give each part of the drawing an id, such as id="left_wing".',
 		};
 	}
 	return { ok: true, map: { label, viewBox, shapes }, names };

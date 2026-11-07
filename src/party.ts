@@ -1,7 +1,7 @@
 import type { App, Component } from "obsidian";
 import { summarizeProfile } from "./data.ts";
 import { CharacterInfoView, drawMiniFigure } from "./render.ts";
-import type { Frontmatter, Profile, RegionPatch } from "./types.ts";
+import type { Frontmatter, Item, Profile, RegionPatch } from "./types.ts";
 
 /** A party member is a known profile, or a name that has no profile yet. */
 export type PartyMember = { profile: Profile } | { missing: string };
@@ -15,6 +15,8 @@ export interface PartyOptions {
 	component: Component;
 	getFrontmatter: (profile: Profile) => Frontmatter;
 	save: (profile: Profile, regionId: string, patch: RegionPatch) => Promise<void>;
+	/** The inventory writer for a profile, or null when the inventory feature is off. */
+	saveInventory: (profile: Profile) => ((items: Item[]) => Promise<void>) | null;
 }
 
 /** Several profiles side by side. A tile opens that profile in full, with a way back. */
@@ -125,6 +127,7 @@ export class PartyView {
 			component: this.o.component,
 			getFrontmatter: () => this.o.getFrontmatter(profile),
 			save: (regionId, patch) => this.o.save(profile, regionId, patch),
+			saveInventory: this.o.saveInventory(profile),
 		});
 		this.focused.draw();
 	}

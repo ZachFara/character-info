@@ -2,6 +2,8 @@
 import type {
 	Frontmatter,
 	HistoryEntry,
+	Item,
+	ItemKind,
 	PluginSettings,
 	Profile,
 	Region,
@@ -11,6 +13,7 @@ import type {
 } from "./types.ts";
 
 const LIST_KEYS = ["doing", "fix", "links"] as const;
+export const ITEM_KINDS: ItemKind[] = ["weapon", "armor", "gear"];
 /** Fields that are removed from the stored region when they end up empty. */
 const CLEARABLE = new Set<string>(["note", ...LIST_KEYS]);
 
@@ -244,5 +247,47 @@ export function normalizeSettings(raw: unknown): PluginSettings {
 	return {
 		profiles,
 		defaultProfile: typeof r.defaultProfile === "string" ? r.defaultProfile : "",
+		features: { inventory: asRecord(r.features).inventory === true },
 	};
+}
+
+function isItemKind(value: unknown): value is ItemKind {
+	return ITEM_KINDS.some((k) => k === value);
+}
+
+/** One inventory entry with defaults filled in, or null when it has no name. */
+function toItem(entry: unknown): Item | null {
+	const r = asRecord(entry);
+	const name = typeof r.name === "string" ? r.name.trim() : "";
+	if (!name) return null;
+	return {
+		name,
+		kind: isItemKind(r.kind) ? r.kind : "gear",
+		qty: typeof r.qty === "number" && r.qty >= 1 ? Math.floor(r.qty) : 1,
+		note: typeof r.note === "string" ? r.note.trim() : "",
+		region: typeof r.region === "string" && r.region ? r.region : null,
+	};
+}
+
+/** The inventory in a profile note. Entries without a name are dropped and the rest are defaulted. */
+export function readInventory(fm: Frontmatter | undefined): Item[] {
+	const raw: unknown = fm?.inventory;
+	if (!Array.isArray(raw)) return [];
+	return (raw as unknown[]).map(toItem).filter((i): i is Item => i !== null);
+}
+
+/** Writes the inventory into a frontmatter object in place, leaving out fields that are empty. */
+export function applyInventory(fm: Frontmatter, items: Item[]): Frontmatter {
+	if (!items.length) {
+		delete fm.inventory;
+		return fm;
+	}
+	fm.inventory = items.map((i) => ({
+		name: i.name,
+		kind: i.kind,
+		...(i.qty === 1 ? {} : { qty: i.qty }),
+		...(i.note ? { note: i.note } : {}),
+		...(i.region ? { region: i.region } : {}),
+	}));
+	return fm;
 }

@@ -63,7 +63,6 @@ None of these exist yet. Each becomes a task in `PROGRESS.md`.
 - **Review badges.** A region not touched for N days shows a badge, so stale regions are visible.
 - **Party view.** Several profiles side by side, each showing its worst region.
 - **Hit location and damage on click.** A roll button using a per-profile table, and a damage action that steps a state.
-- **Inventory.** An optional feature, off by default and switched on in settings. When on, a profile can hold items shown beside the figure. The design questions are in PROGRESS.md.
 - **Custom SVG maps.** Import an SVG and click shapes to assign them to regions.
 
 ## Non-goals

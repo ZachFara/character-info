@@ -2,10 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
 	applyEdit,
+	applyInventory,
 	isUnknownStatus,
 	normalizeSettings,
 	parseBlock,
 	pickInitial,
+	readInventory,
 	readRegion,
 	resolveState,
 	slug,
@@ -15,7 +17,7 @@ import {
 	uniqueId,
 } from "../src/data.ts";
 import { STATE_SETS, TEMPLATES, getMap, makeProfile } from "../src/presets.ts";
-import type { Frontmatter, Profile } from "../src/types.ts";
+import type { Frontmatter, Item, Profile } from "../src/types.ts";
 
 const profile: Profile = {
 	id: "me",
@@ -97,8 +99,16 @@ test("parseBlock reads key value lines", () => {
 });
 
 test("normalizeSettings drops malformed saved data instead of trusting it", () => {
-	assert.deepEqual(normalizeSettings(null), { profiles: [], defaultProfile: "" });
-	assert.deepEqual(normalizeSettings("junk"), { profiles: [], defaultProfile: "" });
+	assert.deepEqual(normalizeSettings(null), {
+		profiles: [],
+		defaultProfile: "",
+		features: { inventory: false },
+	});
+	assert.deepEqual(normalizeSettings("junk"), {
+		profiles: [],
+		defaultProfile: "",
+		features: { inventory: false },
+	});
 	const good = makeProfile("character", "Thorn", []);
 	const saved = normalizeSettings({
 		profiles: [good, { id: 1 }, { ...good, states: [] }],
@@ -160,4 +170,45 @@ test("a summary counts the problem states in order and names the worst region", 
 test("a summary of an all-default profile has no problems and no worst region", () => {
 	const s = summarizeProfile(profile, {});
 	assert.deepEqual(s, { problems: [], worst: null });
+});
+
+test("the inventory flag defaults to off and only a true value turns it on", () => {
+	assert.equal(normalizeSettings({}).features.inventory, false);
+	assert.equal(normalizeSettings({ features: { inventory: "yes" } }).features.inventory, false);
+	assert.equal(normalizeSettings({ features: { inventory: true } }).features.inventory, true);
+});
+
+test("the inventory is read with defaults and junk entries dropped", () => {
+	const fm: Frontmatter = {
+		inventory: [
+			{ name: "Sword", kind: "weapon", qty: 2, note: "Steel", region: "armR" },
+			{ name: "Rope" },
+			{ name: "Odd", kind: "spell", qty: 0 },
+			{ kind: "armor" },
+			"junk",
+		],
+	};
+	assert.deepEqual(readInventory(fm), [
+		{ name: "Sword", kind: "weapon", qty: 2, note: "Steel", region: "armR" },
+		{ name: "Rope", kind: "gear", qty: 1, note: "", region: null },
+		{ name: "Odd", kind: "gear", qty: 1, note: "", region: null },
+	]);
+	assert.deepEqual(readInventory({}), []);
+	assert.deepEqual(readInventory({ inventory: "none" }), []);
+});
+
+test("writing the inventory leaves out empty fields and removes the key when empty", () => {
+	const items: Item[] = [
+		{ name: "Sword", kind: "weapon", qty: 1, note: "", region: null },
+		{ name: "Water", kind: "gear", qty: 3, note: "1 L", region: "armL" },
+	];
+	const fm: Frontmatter = { regions: {} };
+	applyInventory(fm, items);
+	assert.deepEqual(fm.inventory, [
+		{ name: "Sword", kind: "weapon" },
+		{ name: "Water", kind: "gear", qty: 3, note: "1 L", region: "armL" },
+	]);
+	assert.deepEqual(readInventory(fm), items);
+	applyInventory(fm, []);
+	assert.equal("inventory" in fm, false);
 });

@@ -10,7 +10,7 @@ import type {
 	drawNotice as drawNoticeFn,
 } from "../src/render.ts";
 import type { TemplateKey } from "../src/presets.ts";
-import type { Frontmatter, Profile, RegionPatch } from "../src/types.ts";
+import type { Frontmatter, Item, Profile, RegionPatch } from "../src/types.ts";
 
 const mod = await loadModule<{
 	CharacterInfoView: typeof ViewClass;
@@ -33,7 +33,12 @@ function profile(key: keyof typeof TEMPLATES): Profile {
 	};
 }
 
-function mount(p: Profile, fm: Frontmatter, saved: [string, RegionPatch][] = []): HTMLElement {
+function mount(
+	p: Profile,
+	fm: Frontmatter,
+	saved: [string, RegionPatch][] = [],
+	saveInventory: ViewOptions["saveInventory"] = null,
+): HTMLElement {
 	const el = document.body.appendChild(document.createElement("div"));
 	const opts: ViewOptions = {
 		app: {} as ViewOptions["app"],
@@ -46,6 +51,7 @@ function mount(p: Profile, fm: Frontmatter, saved: [string, RegionPatch][] = [])
 			saved.push([id, patch]);
 			return Promise.resolve();
 		},
+		saveInventory,
 	};
 	new mod.CharacterInfoView(opts).draw();
 	return el;
@@ -176,4 +182,107 @@ test("a notice replaces the block content with a message", () => {
 	mod.drawNotice(el, "Unknown template");
 	assert.equal(text(el, ".ci-notice"), "Unknown template");
 	assert.equal(el.textContent, "Unknown template");
+});
+
+const SWORD: Item = { name: "Longsword", kind: "weapon", qty: 1, note: "Steel", region: "armR" };
+const VEST: Item = { name: "[[Plate carrier]]", kind: "armor", qty: 1, note: "", region: null };
+const WATER: Item = { name: "Water", kind: "gear", qty: 3, note: "1 L bottles", region: null };
+
+function mountInventory(items: Item[]): { el: HTMLElement; writes: Item[][] } {
+	const writes: Item[][] = [];
+	const fm: Frontmatter = { inventory: items.map((i) => ({ ...i })) };
+	const el = mount(profile("character"), fm, [], (next) => {
+		writes.push(next);
+		return Promise.resolve();
+	});
+	return { el, writes };
+}
+
+test("the inventory panel is hidden when the feature is off", () => {
+	assert.equal(mount(profile("character"), { inventory: [SWORD] }).querySelector(".ci-inventory"), null);
+});
+
+test("an empty inventory says so and offers a way to add", () => {
+	const { el } = mountInventory([]);
+	assert.match(text(el, ".ci-inv-count"), /0 items/);
+	assert.match(text(el, ".ci-inventory .ci-empty"), /Nothing carried yet/);
+	assert.ok(el.querySelector(".ci-item-add input"));
+});
+
+test("items are grouped by kind with their quantity, note and region", () => {
+	const { el } = mountInventory([WATER, SWORD, VEST]);
+	assert.deepEqual(
+		all(el, ".ci-inv-group .ci-sec-title").map((t) => t.textContent),
+		["Weapons", "Armor", "Gear"],
+	);
+	const [sword] = all(el, ".ci-inv-group.weapon .ci-item");
+	assert.ok(sword);
+	assert.equal(text(sword, ".ci-item-name"), "Longsword");
+	assert.equal(text(sword, ".ci-item-note"), "Steel");
+	assert.equal(text(sword, ".ci-item-region"), "Right arm");
+	assert.equal(text(must(el, ".ci-inv-group.gear"), ".ci-item-n"), "3");
+	assert.equal(text(must(el, ".ci-inv-group.armor"), ".ci-item-name"), "[[Plate carrier]]");
+});
+
+test("the quantity buttons change the count and cannot go below one", () => {
+	const { el, writes } = mountInventory([WATER, SWORD]);
+	const gear = must(el, ".ci-inv-group.gear");
+	const [minus, plus] = all(gear, ".ci-item-qty button");
+	assert.ok(minus && plus);
+	plus.click();
+	minus.click();
+	assert.deepEqual(
+		writes.map((w) => w.find((i) => i.name === "Water")?.qty),
+		[4, 2],
+	);
+	const sword = all(el, ".ci-inv-group.weapon .ci-item-qty button")[0];
+	assert.ok(sword);
+	assert.equal((sword as HTMLButtonElement).disabled, true);
+});
+
+test("removing an item writes the list without it", () => {
+	const { el, writes } = mountInventory([WATER, SWORD]);
+	must(must(el, ".ci-inv-group.weapon"), ".ci-item > .ci-inv-btn").click();
+	assert.deepEqual(
+		writes[0]?.map((i) => i.name),
+		["Water"],
+	);
+});
+
+test("adding an item uses the chosen name, note, kind and region", () => {
+	const { el, writes } = mountInventory([WATER]);
+	const [name, note] = all(el, ".ci-item-add input");
+	const [kind, region] = all(el, ".ci-item-add select");
+	assert.ok(name && note && kind && region);
+	(name as HTMLInputElement).value = "  Kite shield ";
+	(note as HTMLInputElement).value = "Painted";
+	(kind as HTMLSelectElement).value = "armor";
+	(region as HTMLSelectElement).value = "armL";
+	must(el, ".ci-item-add .mod-cta").click();
+	const [written] = writes;
+	assert.ok(written);
+	assert.equal(written.length, 2);
+	assert.deepEqual(written.at(-1), {
+		name: "Kite shield",
+		kind: "armor",
+		qty: 1,
+		note: "Painted",
+		region: "armL",
+	});
+});
+
+test("an empty name adds nothing", () => {
+	const { el, writes } = mountInventory([]);
+	must(el, ".ci-item-add .mod-cta").click();
+	assert.equal(writes.length, 0);
+});
+
+test("pressing Enter in the name box adds the item as carried gear by default", () => {
+	const { el, writes } = mountInventory([]);
+	const name = must(el, ".ci-item-add input") as HTMLInputElement;
+	name.value = "Rope";
+	name.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+	const [written] = writes;
+	assert.ok(written);
+	assert.deepEqual(written[0], { name: "Rope", kind: "gear", qty: 1, note: "", region: null });
 });

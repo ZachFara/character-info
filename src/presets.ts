@@ -31,7 +31,7 @@ const C = {
 	orange: "#e8883a",
 	red: "#e5534b",
 	gray: "#7a7a7a",
-	dark: "#4b4b4b",
+	violet: "#a06bd0",
 };
 
 const BODY_VIEWBOX = "54 7 132 425";
@@ -97,7 +97,7 @@ export const STATE_SETS = {
 			{ id: "bruised", label: "Bruised", color: C.yellow, pips: 4, bad: true },
 			{ id: "wounded", label: "Wounded", color: C.orange, pips: 3, bad: true },
 			{ id: "maimed", label: "Maimed", color: C.red, pips: 1, bad: true },
-			{ id: "lost", label: "Lost", color: C.dark, pips: 0, bad: true },
+			{ id: "lost", label: "Lost", color: C.violet, pips: 0, bad: true },
 		],
 	},
 	condition: {

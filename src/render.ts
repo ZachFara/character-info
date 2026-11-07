@@ -52,8 +52,9 @@ export class CharacterInfoView {
 		this.o.el.empty();
 		const root = this.o.el.createDiv({ cls: "character-info" });
 		this.drawHeader(root, fm);
-		const grid = root.createDiv({ cls: "ci-grid" });
-		if (profile.regions.some((r) => this.map.shapes[r.id] !== undefined)) this.drawFigure(grid, fm);
+		const hasMap = profile.regions.some((r) => this.map.shapes[r.id] !== undefined);
+		const grid = root.createDiv({ cls: "ci-grid" + (hasMap ? "" : " ci-no-map") });
+		if (hasMap) this.drawFigure(grid, fm);
 		const side = grid.createDiv({ cls: "ci-side" });
 		this.drawCard(side, fm);
 		this.drawRoster(side, fm);
@@ -100,13 +101,13 @@ export class CharacterInfoView {
 	}
 
 	private regionShape(r: Region, fm: Frontmatter, caption: HTMLElement): SVGGElement {
-		const color = resolveState(this.o.profile, readRegion(fm, r.id).status).color;
-		const g = svgGroup("ci-region" + (r.id === this.selected ? " is-sel" : ""), [
-			this.map.shapes[r.id] ?? "",
-		]);
+		const state = resolveState(this.o.profile, readRegion(fm, r.id).status);
+		// The default state is drawn neutral so colour lands only on regions that need attention.
+		const neutral = state.id === this.o.profile.defaultState;
+		const cls = "ci-region" + (neutral ? " is-default" : "") + (r.id === this.selected ? " is-sel" : "");
+		const g = svgGroup(cls, [this.map.shapes[r.id] ?? ""]);
 		g.dataset.region = r.id;
-		g.style.fill = color;
-		g.style.stroke = color;
+		if (!neutral) g.style.setProperty("--ci-c", state.color);
 		g.addEventListener("click", () => {
 			this.select(r.id);
 		});

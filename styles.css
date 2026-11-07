@@ -19,10 +19,9 @@
 }
 .ci-title {
 	margin: 0;
-	font-size: var(--font-ui-small);
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	color: var(--text-muted);
+	font-size: var(--font-ui-medium);
+	font-weight: var(--font-semibold);
+	color: var(--text-normal);
 }
 .ci-legend {
 	display: flex;
@@ -53,13 +52,13 @@
 	display: grid;
 	grid-template-columns: minmax(110px, 190px) 1fr;
 	gap: var(--size-4-5);
-	align-items: start;
+	align-items: stretch;
 }
 @media (max-width: 560px) {
 	.ci-grid {
 		grid-template-columns: 1fr;
 	}
-	.ci-fig {
+	.ci-grid > .ci-fig {
 		max-width: 170px;
 		margin: 0 auto;
 	}
@@ -81,22 +80,38 @@
 	min-height: 1.2em;
 }
 .ci-silhouette {
-	fill: var(--background-modifier-border);
-	stroke: var(--background-modifier-border-hover);
-	stroke-width: 1.5;
+	fill: var(--background-modifier-border-hover);
+	stroke: none;
 }
 .ci-region {
-	fill-opacity: 0.45;
+	fill: var(--ci-c);
+	stroke: var(--ci-c);
+	fill-opacity: 0.55;
 	stroke-width: 1.5;
 	cursor: pointer;
 	transition: fill-opacity 0.12s;
 }
+.ci-region.is-default {
+	fill: var(--background-modifier-border-hover);
+	fill-opacity: 0;
+	/* A faint seam in the card colour keeps neighbouring parts readable on the neutral body. */
+	stroke: var(--background-secondary);
+	stroke-width: 1.2;
+	stroke-opacity: 0.7;
+}
 .ci-region:hover {
-	fill-opacity: 0.7;
+	fill-opacity: 0.8;
+}
+.ci-region.is-default:hover {
+	fill-opacity: 0.6;
 }
 .ci-region.is-sel {
-	fill-opacity: 0.85;
+	fill-opacity: 0.9;
+	stroke: var(--text-normal);
 	stroke-width: 2.5;
+}
+.ci-region.is-default.is-sel {
+	fill-opacity: 0.35;
 }
 
 .ci-card {
@@ -162,11 +177,12 @@
 }
 .ci-sec-title,
 .ci-sec summary {
-	font-size: var(--font-ui-smaller);
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
 	color: var(--text-muted);
-	cursor: default;
+}
+.ci-sec summary {
+	cursor: pointer;
 }
 .ci-sec ul {
 	margin: var(--size-4-1) 0 0;
@@ -250,4 +266,22 @@
 	font-weight: var(--font-semibold);
 	cursor: pointer;
 	padding: var(--size-4-1) 0;
+}
+
+/* Layout when a profile has no map: the card uses the full width. */
+.ci-no-map {
+	grid-template-columns: 1fr;
+}
+
+/* The side column fills the figure's height: the card grows and the chips sit at the bottom. */
+.ci-side {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+.ci-side .ci-card {
+	flex: 1;
+}
+.ci-fig svg {
+	max-height: 440px;
 }

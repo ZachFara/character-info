@@ -35,6 +35,23 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T9. Real-Obsidian check script.** Done: `make obsidian-check` builds the plugin, starts a throwaway Obsidian with its own profile and vault, checks the body, a character, the armor view and a party, saves screenshots to `.scratch/obsidian-check/`, and exits non-zero on failure. See decision 0014.
 - [ ] **T8. Release prep.** Done when a tag builds `main.js`, `manifest.json` and `styles.css` in CI, the README has screenshots, and the community plugin checklist is satisfied.
 - [x] **T13. List indent in the card.** Done: card lists use a small dot aligned with the section title.
+- [x] **T15. Browser harness.** Done: `npm run harness` runs the whole plugin in Chrome over an in-memory vault, with settings, commands, both themes and a phone-width frame. See decision 0015. Faster than `make obsidian-check` for clicking around; results still need a real Obsidian check.
+
+### Found with the browser harness
+
+Not yet checked in real Obsidian. Each is a candidate task.
+
+- [ ] **Profiles register only once their note renders.** A `character-party` block with `all`, and the settings list, miss profiles whose notes have not been opened, even when their data notes exist. Scan the vault for blocks on load.
+- [ ] **The create buttons do not write the template into the block.** A profile made from the "no profile called X" prompt lives only in `data.json`, against decision 0009. Write `template:` into the block, as adding a region does.
+- [ ] **The remove cross is hover only.** Hard to reach on touch screens. Show it when the device cannot hover.
+- [ ] **Items go on lost regions.** Kits put pieces on a region in the Lost state, and the card lists them under Worn and held without a warning.
+- [ ] **Small fixes.** The party header says "1 members". DESIGN.md lists an "Insert block" command that does not exist. "Select a region" stays under the figure after a region is selected.
+- [ ] **Card flow.** Select a region right after adding it. Keep the quick add's list choice after an add. Add a picked note suggestion on the first Enter.
+- [ ] **Inventory per profile.** The switch is global, so a car or a health profile gets an inventory and the soldier kit. Consider an `inventory:` line in the block and kits that match the template.
+- [ ] **Armor view hides states.** Tint or outline armored parts by state.
+- [ ] **Phone layout.** The figure fills the first screen, so the card is below the fold after a tap.
+- [ ] **Party.** Sort tiles by attention, and link each tile to its note.
+- [ ] **Unknown template.** Offer the template buttons that the unknown-profile prompt has.
 
 ## Decisions made on the owner's go-ahead
 

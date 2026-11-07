@@ -53,6 +53,7 @@ npm test       # tests only
 npm run build  # writes main.js (gitignored)
 scripts/deploy.sh /path/to/vault   # copy a build into a vault to try it
 make obsidian-check                # run the plugin in a real, throwaway Obsidian (needs Obsidian)
+npm run harness                    # the whole plugin in Chrome at http://127.0.0.1:8765/ (decision 0015)
 ```
 
 `make check` runs, in order: prettier check, eslint with zero warnings (strict type-checked rules, complexity limits, the Obsidian rules), `tsc --noEmit` in strict mode, knip for dead code, dependency-cruiser for module boundaries, the layout check, the tests, and a production build. The pre-commit hook and CI both run exactly `make check`. The commit-msg hook and CI also check conventional commits.
@@ -64,6 +65,7 @@ make obsidian-check                # run the plugin in a real, throwaway Obsidia
 - Imports inside `src/` and `test/` use the `.ts` extension. esbuild and Node both need it.
 - Tests import `data.ts` and `presets.ts` directly under Node's native type stripping, so those two files use erasable syntax only: no enums, namespaces or parameter properties. `render.ts` is bundled by esbuild in its test, so it is not limited this way.
 - The renderer is tested under jsdom with a stubbed `obsidian` module (`test/obsidian-stub.ts`). To see a change in real Obsidian, run `make obsidian-check`: it starts a separate Obsidian with its own temp profile and vault, so the owner's Obsidian is never touched, prints one line per check, and leaves screenshots in `.scratch/obsidian-check/`. Add a check to `CHECKS` in the script for new user-facing behaviour, and empty `.scratch/` before ending the session.
+- The browser harness (`npm run harness`) runs `src/main.ts` against `test/browser-obsidian.ts`. A new Obsidian API in `src/` needs adding there as well as to the jsdom stub. `window.harness` drives it from scripts: `open`, `run`, `read`, `write`, `files`, `data`, `reset`.
 - Frontmatter and `data.json` are untrusted. Read them through `readRegion` and `normalizeSettings`.
 - No Claude co-author trailers, no "Generated with" lines, no mention of Claude as author in commits, PRs or docs. The owner is the only author.
 

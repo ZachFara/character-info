@@ -362,3 +362,53 @@ test("the quick row is not shown while editing, where the form has its own state
 	assert.equal(el.querySelector(".ci-quick"), null);
 	assert.equal(all(el, ".ci-form .ci-state").length, 5);
 });
+
+const NOTED: Frontmatter = {
+	regions: {
+		head: { status: "bruised", doing: ["Rest", "Ice"], fix: ["See a doctor"], links: ["[[Head injuries]]"] },
+	},
+};
+
+test("each list item has a cross that saves the list without it", () => {
+	const saved: [string, RegionPatch][] = [];
+	const el = mount(profile("character"), NOTED, saved);
+	pick(el, "Head");
+	const rows = all(el, ".ci-sec.doing li");
+	assert.equal(rows.length, 2);
+	click(must(rows[0] ?? el, ".ci-li-x"));
+	assert.deepEqual(saved, [["head", { doing: ["Ice"] }]]);
+});
+
+test("the quick add row adds to the chosen list and keeps what was there", () => {
+	const saved: [string, RegionPatch][] = [];
+	const el = mount(profile("character"), NOTED, saved);
+	pick(el, "Head");
+	const input = must(el, ".ci-quick-add input") as HTMLInputElement;
+	input.value = "Stretch";
+	click(must(el, ".ci-quick-add button"));
+	(must(el, ".ci-quick-add select") as HTMLSelectElement).value = "fix";
+	input.value = "Book a scan";
+	input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+	assert.deepEqual(saved, [
+		["head", { doing: ["Rest", "Ice", "Stretch"] }],
+		["head", { fix: ["See a doctor", "Book a scan"] }],
+	]);
+});
+
+test("a link added through the quick row is stored as a wikilink", () => {
+	const saved: [string, RegionPatch][] = [];
+	const el = mount(profile("character"), NOTED, saved);
+	pick(el, "Head");
+	(must(el, ".ci-quick-add select") as HTMLSelectElement).value = "links";
+	(must(el, ".ci-quick-add input") as HTMLInputElement).value = "Concussion rules";
+	click(must(el, ".ci-quick-add button"));
+	assert.deepEqual(saved, [["head", { links: ["[[Head injuries]]", "[[Concussion rules]]"] }]]);
+});
+
+test("an empty quick add saves nothing", () => {
+	const saved: [string, RegionPatch][] = [];
+	const el = mount(profile("character"), NOTED, saved);
+	pick(el, "Head");
+	click(must(el, ".ci-quick-add button"));
+	assert.equal(saved.length, 0);
+});

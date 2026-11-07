@@ -1,5 +1,5 @@
 # `make check` is the single gate. The pre-commit hook and CI both run exactly this.
-.PHONY: check setup format
+.PHONY: check setup format obsidian-check
 
 check:
 	npx prettier --check .
@@ -17,3 +17,7 @@ setup:
 
 format:
 	npx prettier --write .
+
+# Runs the plugin in a real, throwaway Obsidian. Needs Obsidian installed; not part of check.
+obsidian-check:
+	node scripts/obsidian-check.mjs

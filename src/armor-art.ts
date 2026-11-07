@@ -144,3 +144,24 @@ export function armorMarkup(looks: string[]): string[] {
 		.sort((a, b) => ORDER.indexOf(a.piece) - ORDER.indexOf(b.piece))
 		.map((l) => l.markup);
 }
+
+const SET_LABELS: Record<string, string> = { military: "Military", gravethorn: "Gravethorn" };
+const PIECE_LABELS: Record<ArmorPiece, string> = {
+	helm: "helmet",
+	chest: "chest armor",
+	pauldrons: "shoulder plates",
+	gauntletR: "right glove or gauntlet",
+	gauntletL: "left glove or gauntlet",
+	greaveR: "right knee or greave",
+	greaveL: "left knee or greave",
+	boots: "boots",
+};
+
+/** Every drawing that can be picked for a piece of armor, as a value and a readable label. */
+export const ARMOR_LOOKS: { value: string; label: string }[] = Object.entries(ARMOR_SETS).flatMap(
+	([set, pieces]) =>
+		ORDER.filter((p) => pieces[p] !== undefined).map((p) => ({
+			value: `${set}:${p}`,
+			label: `${SET_LABELS[set] ?? set} ${PIECE_LABELS[p]}`,
+		})),
+);

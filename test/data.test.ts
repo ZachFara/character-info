@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
 	applyEdit,
+	armorLooks,
 	applyInventory,
 	describeItem,
 	isUnknownStatus,
@@ -183,7 +184,7 @@ test("the inventory flag defaults to off and only a true value turns it on", () 
 test("the inventory is read with defaults and junk entries dropped", () => {
 	const fm: Frontmatter = {
 		inventory: [
-			{ name: "Sword", kind: "weapon", qty: 2, note: "Steel", region: "armR" },
+			{ name: "Sword", kind: "weapon", qty: 2, note: "Steel", region: "armR", look: null },
 			{ name: "Rope" },
 			{ name: "Odd", kind: "spell", qty: 0 },
 			{ kind: "armor" },
@@ -191,9 +192,9 @@ test("the inventory is read with defaults and junk entries dropped", () => {
 		],
 	};
 	assert.deepEqual(readInventory(fm), [
-		{ name: "Sword", kind: "weapon", qty: 2, note: "Steel", region: "armR" },
-		{ name: "Rope", kind: "gear", qty: 1, note: "", region: null },
-		{ name: "Odd", kind: "gear", qty: 1, note: "", region: null },
+		{ name: "Sword", kind: "weapon", qty: 2, note: "Steel", region: "armR", look: null },
+		{ name: "Rope", kind: "gear", qty: 1, note: "", region: null, look: null },
+		{ name: "Odd", kind: "gear", qty: 1, note: "", region: null, look: null },
 	]);
 	assert.deepEqual(readInventory({}), []);
 	assert.deepEqual(readInventory({ inventory: "none" }), []);
@@ -201,8 +202,8 @@ test("the inventory is read with defaults and junk entries dropped", () => {
 
 test("writing the inventory leaves out empty fields and removes the key when empty", () => {
 	const items: Item[] = [
-		{ name: "Sword", kind: "weapon", qty: 1, note: "", region: null },
-		{ name: "Water", kind: "gear", qty: 3, note: "1 L", region: "armL" },
+		{ name: "Sword", kind: "weapon", qty: 1, note: "", region: null, look: null },
+		{ name: "Water", kind: "gear", qty: 3, note: "1 L", region: "armL", look: null },
 	];
 	const fm: Frontmatter = { regions: {} };
 	applyInventory(fm, items);
@@ -216,12 +217,42 @@ test("writing the inventory leaves out empty fields and removes the key when emp
 });
 
 test("items on a region are those tied to it, and an item reads as one line", () => {
-	const sword: Item = { name: "Longsword", kind: "weapon", qty: 1, note: "Steel", region: "armR" };
-	const water: Item = { name: "Water", kind: "gear", qty: 3, note: "", region: null };
-	const dagger: Item = { name: "Dagger", kind: "weapon", qty: 1, note: "", region: "armR" };
+	const sword: Item = {
+		name: "Longsword",
+		kind: "weapon",
+		qty: 1,
+		note: "Steel",
+		region: "armR",
+		look: null,
+	};
+	const water: Item = { name: "Water", kind: "gear", qty: 3, note: "", region: null, look: null };
+	const dagger: Item = { name: "Dagger", kind: "weapon", qty: 1, note: "", region: "armR", look: null };
 	assert.deepEqual(itemsOnRegion([sword, water, dagger], "armR"), [sword, dagger]);
 	assert.deepEqual(itemsOnRegion([sword, water], "head"), []);
 	assert.equal(describeItem(sword), "Longsword · Steel");
 	assert.equal(describeItem(water), "3× Water");
 	assert.equal(describeItem(dagger), "Dagger");
+});
+
+test("an item's look is read and written, and only armor with a look is drawn", () => {
+	const fm: Frontmatter = {
+		inventory: [
+			{ name: "Helm", kind: "armor", region: "head", look: "gravethorn:helm" },
+			{ name: "Vest", kind: "armor" },
+			{ name: "Blade", kind: "weapon", look: "gravethorn:helm" },
+		],
+	};
+	const items = readInventory(fm);
+	assert.equal(items[0]?.look, "gravethorn:helm");
+	assert.equal(items[1]?.look, null);
+	assert.deepEqual(armorLooks(items), ["gravethorn:helm"]);
+	const out: Frontmatter = {};
+	applyInventory(out, items);
+	assert.deepEqual((out.inventory as unknown[])[0], {
+		name: "Helm",
+		kind: "armor",
+		region: "head",
+		look: "gravethorn:helm",
+	});
+	assert.deepEqual((out.inventory as unknown[])[1], { name: "Vest", kind: "armor" });
 });

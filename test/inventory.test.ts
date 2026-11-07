@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { all, mount, must, pick, profile, text } from "./view-helpers.ts";
+import { all, click, mount, must, pick, profile, text } from "./view-helpers.ts";
 import type { Frontmatter, Item } from "../src/types.ts";
 
-const SWORD: Item = { name: "Longsword", kind: "weapon", qty: 1, note: "Steel", region: "armR" };
-const VEST: Item = { name: "[[Plate carrier]]", kind: "armor", qty: 1, note: "", region: null };
-const WATER: Item = { name: "Water", kind: "gear", qty: 3, note: "1 L bottles", region: null };
+const SWORD: Item = { name: "Longsword", kind: "weapon", qty: 1, note: "Steel", region: "armR", look: null };
+const VEST: Item = { name: "[[Plate carrier]]", kind: "armor", qty: 1, note: "", region: null, look: null };
+const WATER: Item = { name: "Water", kind: "gear", qty: 3, note: "1 L bottles", region: null, look: null };
 
 function mountInventory(items: Item[]): { el: HTMLElement; writes: Item[][] } {
 	const writes: Item[][] = [];
@@ -87,6 +87,7 @@ test("adding an item uses the chosen name, note, kind and region", () => {
 		qty: 1,
 		note: "Painted",
 		region: "armL",
+		look: null,
 	});
 });
 
@@ -103,7 +104,7 @@ test("pressing Enter in the name box adds the item as carried gear by default", 
 	name.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
 	const [written] = writes;
 	assert.ok(written);
-	assert.deepEqual(written[0], { name: "Rope", kind: "gear", qty: 1, note: "", region: null });
+	assert.deepEqual(written[0], { name: "Rope", kind: "gear", qty: 1, note: "", region: null, look: null });
 });
 
 test("the card for a region lists what is worn or held there when the inventory is on", () => {
@@ -123,28 +124,93 @@ test("a region with nothing on it has no worn section, and the inventory being o
 	assert.equal(off.querySelector(".ci-sec.worn"), null);
 });
 
-test("the kit row offers every kit and adds the chosen one placed on the profile's regions", () => {
+test("the kit row offers both kits and adds the chosen one placed on the profile's regions", () => {
 	const { el, writes } = mountInventory([WATER]);
 	const pickKit = must(el, ".ci-kit-row select") as HTMLSelectElement;
 	assert.deepEqual(
 		[...pickKit.options].map((o) => o.value),
-		["soldier", "knight", "gravethorn"],
+		["soldier", "gravethorn"],
 	);
-	pickKit.value = "knight";
+	pickKit.value = "gravethorn";
 	must(el, ".ci-kit-row button").click();
 	const [written] = writes;
 	assert.ok(written);
 	assert.equal(written[0]?.name, "Water");
-	assert.equal(written.find((i) => i.name === "Longsword")?.region, "armR");
-	assert.equal(written.find((i) => i.name === "Left greave")?.region, "legL");
+	assert.equal(written.find((i) => i.name === "Gravethorn greatsword")?.region, "armR");
+	const greave = written.find((i) => i.name === "Gravethorn left greave");
+	assert.ok(greave);
+	assert.equal(greave.region, "legL");
+	assert.equal(greave.look, "gravethorn:greaveL");
 });
 
 test("adding a kit skips pieces that are already in the inventory", () => {
-	const kit: Item[] = [{ name: "Longsword", kind: "weapon", qty: 1, note: "", region: "armR" }];
+	const kit: Item[] = [
+		{ name: "Gravethorn greatsword", kind: "weapon", qty: 1, note: "", region: "armR", look: null },
+	];
 	const { el, writes } = mountInventory(kit);
 	const pickKit = must(el, ".ci-kit-row select") as HTMLSelectElement;
-	pickKit.value = "knight";
+	pickKit.value = "gravethorn";
 	must(el, ".ci-kit-row button").click();
+	const [written] = writes;
 	assert.equal(writes.length, 1);
-	assert.equal(writes[0]?.length, 13);
+	assert.equal(written?.length, 10);
+});
+
+const HELM: Item = {
+	name: "Gravethorn helm",
+	kind: "armor",
+	qty: 1,
+	note: "",
+	region: "head",
+	look: "gravethorn:helm",
+};
+const BOOTS: Item = {
+	name: "Combat boots",
+	kind: "armor",
+	qty: 1,
+	note: "",
+	region: null,
+	look: "military:boots",
+};
+
+test("there is no view switch when no armor has a drawing", () => {
+	const { el } = mountInventory([SWORD, VEST, WATER]);
+	assert.equal(el.querySelector(".ci-viewtoggle"), null);
+	assert.equal(el.querySelector(".ci-armor"), null);
+});
+
+test("there is no view switch when the inventory is off, even with drawable armor", () => {
+	const el = mount(profile("character"), { inventory: [HELM] });
+	assert.equal(el.querySelector(".ci-viewtoggle"), null);
+});
+
+test("with drawable armor the figure offers Body and Armor and starts on Body", () => {
+	const { el } = mountInventory([HELM, BOOTS, SWORD]);
+	assert.deepEqual(
+		all(el, ".ci-viewtoggle button").map((b) => b.textContent),
+		["Body", "Armor"],
+	);
+	assert.equal(text(el, ".ci-viewtoggle .is-on"), "Body");
+	assert.equal(el.querySelector(".ci-armor"), null);
+});
+
+test("the Armor view draws the pieces over a neutral body, and Body puts the states back", () => {
+	const fm: Frontmatter = { regions: { head: { status: "wounded" } }, inventory: [HELM, BOOTS] };
+	const el = mount(profile("character"), fm, [], () => Promise.resolve());
+	assert.equal(el.querySelectorAll(".ci-region:not(.is-default)").length, 1);
+	click(all(el, ".ci-viewtoggle button").find((b) => b.textContent === "Armor"));
+	const armor = must(el, ".ci-armor");
+	assert.ok(armor.children.length > 0);
+	assert.equal(el.querySelectorAll(".ci-region:not(.is-default)").length, 0);
+	assert.equal(text(el, ".ci-viewtoggle .is-on"), "Armor");
+	click(all(el, ".ci-viewtoggle button").find((b) => b.textContent === "Body"));
+	assert.equal(el.querySelector(".ci-armor"), null);
+	assert.equal(el.querySelectorAll(".ci-region:not(.is-default)").length, 1);
+});
+
+test("selecting a region keeps the Armor view", () => {
+	const { el } = mountInventory([HELM]);
+	click(all(el, ".ci-viewtoggle button").find((b) => b.textContent === "Armor"));
+	pick(el, "Torso");
+	assert.ok(el.querySelector(".ci-armor"));
 });

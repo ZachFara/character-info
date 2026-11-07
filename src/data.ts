@@ -255,6 +255,11 @@ function isItemKind(value: unknown): value is ItemKind {
 	return ITEM_KINDS.some((k) => k === value);
 }
 
+/** A non-empty string, or null for anything else. */
+function textOrNull(value: unknown): string | null {
+	return typeof value === "string" && value ? value : null;
+}
+
 /** One inventory entry with defaults filled in, or null when it has no name. */
 function toItem(entry: unknown): Item | null {
 	const r = asRecord(entry);
@@ -265,7 +270,8 @@ function toItem(entry: unknown): Item | null {
 		kind: isItemKind(r.kind) ? r.kind : "gear",
 		qty: typeof r.qty === "number" && r.qty >= 1 ? Math.floor(r.qty) : 1,
 		note: typeof r.note === "string" ? r.note.trim() : "",
-		region: typeof r.region === "string" && r.region ? r.region : null,
+		region: textOrNull(r.region),
+		look: textOrNull(r.look),
 	};
 }
 
@@ -288,6 +294,7 @@ export function applyInventory(fm: Frontmatter, items: Item[]): Frontmatter {
 		...(i.qty === 1 ? {} : { qty: i.qty }),
 		...(i.note ? { note: i.note } : {}),
 		...(i.region ? { region: i.region } : {}),
+		...(i.look ? { look: i.look } : {}),
 	}));
 	return fm;
 }
@@ -301,4 +308,9 @@ export function itemsOnRegion(items: Item[], regionId: string): Item[] {
 export function describeItem(item: Item): string {
 	const count = item.qty > 1 ? `${String(item.qty)}× ` : "";
 	return `${count}${item.name}${item.note ? ` · ${item.note}` : ""}`;
+}
+
+/** The looks of the armor that has a drawing, for the figure's armor view. */
+export function armorLooks(items: Item[]): string[] {
+	return items.flatMap((i) => (i.kind === "armor" && i.look !== null ? [i.look] : []));
 }

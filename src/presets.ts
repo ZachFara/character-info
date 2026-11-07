@@ -2,6 +2,27 @@
 // A map is a set of SVG shapes keyed by region id. A profile only draws the shapes whose
 // region id it actually has, so deleting a region removes its shape. Regions with no shape
 // live in the chip roster under the figure.
+import { uniqueId } from "./data.ts";
+import type { Profile, Region, State } from "./types.ts";
+
+export interface MapPreset {
+	label: string;
+	viewBox: string;
+	shapes: Record<string, string>;
+}
+
+interface StateSet {
+	label: string;
+	defaultState: string;
+	states: State[];
+}
+
+interface Template {
+	label: string;
+	map: keyof typeof MAPS;
+	stateSet: keyof typeof STATE_SETS;
+	regions: Region[];
+}
 
 const C = {
 	green: "#5aa469",
@@ -13,12 +34,14 @@ const C = {
 	dark: "#4b4b4b",
 };
 
+const BODY_VIEWBOX = "54 7 132 425";
+
 export const MAPS = {
 	none: { label: "No map (chips only)", viewBox: "0 0 10 10", shapes: {} },
 
 	body: {
 		label: "Human body (23 regions)",
-		viewBox: "54 7 132 425",
+		viewBox: BODY_VIEWBOX,
 		shapes: {
 			head: `<ellipse cx="120" cy="44" rx="25" ry="30"/>`,
 			neck: `<rect x="108" y="68" width="24" height="24" rx="8"/>`,
@@ -42,7 +65,7 @@ export const MAPS = {
 	// Sides are the character's own, so the right arm is on the viewer's left.
 	humanoid: {
 		label: "Humanoid, hit locations (6 regions)",
-		viewBox: "54 7 132 425",
+		viewBox: BODY_VIEWBOX,
 		shapes: {
 			head: `<ellipse cx="120" cy="44" rx="25" ry="30"/>`,
 			torso: `<rect x="96" y="96" width="48" height="112" rx="14"/>`,
@@ -52,7 +75,7 @@ export const MAPS = {
 			legL: `<rect x="122" y="214" width="23" height="208" rx="11"/>`,
 		},
 	},
-};
+} satisfies Record<string, MapPreset>;
 
 export const STATE_SETS = {
 	maintenance: {
@@ -88,27 +111,81 @@ export const STATE_SETS = {
 			{ id: "unknown", label: "Unchecked", color: C.gray, pips: 0, bad: false },
 		],
 	},
-};
+} satisfies Record<string, StateSet>;
 
-const BODY_REGIONS = [
-	["head", "Head & Brain"], ["neck", "Neck & Posture"], ["shoulders", "Shoulders"], ["chest", "Chest"],
-	["heart", "Heart & Lungs"], ["lats", "Back & Lats"], ["arms", "Arms"], ["forearms", "Forearms & Grip"],
-	["hands", "Hands & Wrists"], ["core", "Core & Abs"], ["gut", "Gut & Digestion"], ["hips", "Hips & Low Back"],
-	["thighs", "Quads & Hams"], ["knees", "Knees"], ["calves", "Calves & Ankles"], ["feet", "Feet"],
-	["pelvic", "Pelvic Floor"], ["eyes", "Eyes"], ["teeth", "Teeth & Jaw"], ["skin", "Skin"],
-	["sleep", "Sleep"], ["nutrition", "Nutrition"], ["bloodwork", "Bloodwork"],
-];
+const regions = (pairs: [string, string][]): Region[] => pairs.map(([id, name]) => ({ id, name }));
 
-const HUMANOID_REGIONS = [
-	["head", "Head"], ["torso", "Torso"], ["armR", "Right arm"], ["armL", "Left arm"],
-	["legR", "Right leg"], ["legL", "Left leg"],
-];
+const BODY_REGIONS = regions([
+	["head", "Head & Brain"],
+	["neck", "Neck & Posture"],
+	["shoulders", "Shoulders"],
+	["chest", "Chest"],
+	["heart", "Heart & Lungs"],
+	["lats", "Back & Lats"],
+	["arms", "Arms"],
+	["forearms", "Forearms & Grip"],
+	["hands", "Hands & Wrists"],
+	["core", "Core & Abs"],
+	["gut", "Gut & Digestion"],
+	["hips", "Hips & Low Back"],
+	["thighs", "Quads & Hams"],
+	["knees", "Knees"],
+	["calves", "Calves & Ankles"],
+	["feet", "Feet"],
+	["pelvic", "Pelvic Floor"],
+	["eyes", "Eyes"],
+	["teeth", "Teeth & Jaw"],
+	["skin", "Skin"],
+	["sleep", "Sleep"],
+	["nutrition", "Nutrition"],
+	["bloodwork", "Bloodwork"],
+]);
 
-const regions = (pairs) => pairs.map(([id, name]) => ({ id, name }));
+const HUMANOID_REGIONS = regions([
+	["head", "Head"],
+	["torso", "Torso"],
+	["armR", "Right arm"],
+	["armL", "Left arm"],
+	["legR", "Right leg"],
+	["legL", "Left leg"],
+]);
 
 /** Starting points offered when you add a profile. */
 export const TEMPLATES = {
-	body: { label: "My body (maintenance)", map: "body", stateSet: "maintenance", regions: regions(BODY_REGIONS) },
-	character: { label: "Tabletop character (wounds)", map: "humanoid", stateSet: "wounds", regions: regions(HUMANOID_REGIONS) },
+	body: { label: "My body (maintenance)", map: "body", stateSet: "maintenance", regions: BODY_REGIONS },
+	character: {
+		label: "Tabletop character (wounds)",
+		map: "humanoid",
+		stateSet: "wounds",
+		regions: HUMANOID_REGIONS,
+	},
 	blank: { label: "Blank list (conditions)", map: "none", stateSet: "condition", regions: [] },
-};
+} satisfies Record<string, Template>;
+
+export type TemplateKey = keyof typeof TEMPLATES;
+
+const clone = <T>(value: T): T => structuredClone(value);
+
+/** The map for a stored key. Unknown keys, such as a hand-edited one, fall back to no map. */
+export function getMap(key: string): MapPreset {
+	const found = (MAPS as Record<string, MapPreset | undefined>)[key];
+	return found ?? MAPS.none;
+}
+
+/** A new profile from a template. `existing` keeps the id unique. */
+export function makeProfile(templateKey: TemplateKey, name: string, existing: Profile[]): Profile {
+	const t = TEMPLATES[templateKey];
+	const set = STATE_SETS[t.stateSet];
+	return {
+		id: uniqueId(
+			name,
+			existing.map((p) => p.id),
+		),
+		name,
+		map: t.map,
+		states: clone(set.states),
+		defaultState: set.defaultState,
+		regions: clone(t.regions),
+		dataPath: `Character Info/${name}.md`,
+	};
+}

@@ -1,5 +1,7 @@
 .DS_Store
 data.json
 node_modules/
-main.js
+/main.js
 *.bak-*
+.scratch/
+coverage/

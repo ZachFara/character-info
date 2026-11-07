@@ -9,7 +9,7 @@
 set -euo pipefail
 
 PLUGIN_ID="character-info"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VAULT_PATH="${1:-${OBSIDIAN_VAULT_PATH:-}}"
 
 if [[ -z "$VAULT_PATH" ]]; then

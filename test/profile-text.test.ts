@@ -41,11 +41,11 @@ test("a template gives the starting regions, states and map", () => {
 });
 
 test("without a template a defining block starts blank", () => {
-	const { profile } = resolve("profile: Civic\nadd: Engine, Brakes");
+	const { profile } = resolve("profile: Wren\nadd: Tail, Wings");
 	assert.equal(profile.template, "blank");
 	assert.deepEqual(
 		profile.regions.map((r) => r.name),
-		["Engine", "Brakes"],
+		["Tail", "Wings"],
 	);
 });
 
@@ -105,7 +105,7 @@ test("states replace the template's states, best first, with the first as the de
 });
 
 test("a state can carry its own colour and the default can be named", () => {
-	const { profile } = resolve("profile: Car\nstates: Good, Worn=#123abc, Broken\ndefault: Worn");
+	const { profile } = resolve("profile: Wren\nstates: Good, Worn=#123abc, Broken\ndefault: Worn");
 	const [good, worn] = profile.states;
 	assert.ok(good && worn);
 	assert.equal(worn.color, "#123abc");
@@ -292,4 +292,9 @@ test("a review line sets the days, 0 turns it off, and junk is a warning", () =>
 	assert.equal(profile.reviewAfterDays, 30);
 	assert.match(warnings.join(), /number of days/);
 	assert.match(newProfileBlock("A", "body", "full"), /# review: 30/);
+});
+
+test("map can name an SVG file, keeping its case, and an unknown name suggests one", () => {
+	assert.equal(resolve("profile: Kael\nmap: Maps/Kael.svg").profile.map, "Maps/Kael.svg");
+	assert.match(failure("profile: Kael\nmap: giant"), /path of an SVG file/);
 });

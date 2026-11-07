@@ -1,6 +1,6 @@
 # Character Info
 
-A clickable character screen for anything made of parts. Click a region on the figure and see its state, notes, what you are doing about it and what to do next. Think of the health tab in Project Zomboid's character window, but for your own body, a tabletop character, a car or a house.
+A clickable character screen for people: your own body, or the characters in your tabletop games. Click a region on the figure and see its state, notes, what you are doing about it and what to do next. Think of the health tab in Project Zomboid's character window.
 
 Everything is stored in plain notes, so Bases, Dataview and sync all work.
 
@@ -38,7 +38,7 @@ remove: Torso                        # hide regions
 rename: Left arm = Sword arm         # separate several with ;
 states: Healthy, Bruised, Wounded, Severe, Lost
 default: Healthy                     # the first state unless you say otherwise
-map: humanoid                        # body, humanoid or none
+map: humanoid                        # body, humanoid, none, or an SVG file
 review: 30                           # days before a changed region asks to be reviewed
 ```
 ````
@@ -89,6 +89,22 @@ Off by default. Turn it on under **Settings, Character Info, Inventory**. Each p
 - **Armor view.** Kit armor is drawn on the figure. When a profile wears any, a **Body / Armor** switch appears above the figure. Body shows the states, Armor shows the gear. With no drawable armor there is no switch. Kit armor comes with drawings, and any armor can get one through Edit.
 - Selecting a region lists the items worn or held there.
 
+## Your own figure
+
+The built-in figures are a body and a tabletop character. You can also draw your own figure in any SVG editor, such as a character with wings or a tail, or even something that is not a person, like a ship. Give each part an `id`, save the file in your vault, and point a block at it:
+
+````
+```character-info
+profile: Sea Wolf
+map: Maps/ship.svg
+states: Sound, Worn, Damaged, Broken
+```
+````
+
+- Every shape or group with an `id` becomes a region. Its name comes from a `data-name` attribute or a `<title>`, otherwise from the id, so `main_sail` reads as "Main sail".
+- If the block adds no regions, they come straight from the drawing. Edit the SVG and the map reloads.
+- The file is treated as untrusted: only plain shapes and their geometry are kept. Scripts, styles, colours, links and images are dropped. Armor view is for the built-in figure, so custom maps do not have it.
+
 ## Where the data lives
 
 One note per profile, by default `Character Info/<Profile>.md`:
@@ -114,7 +130,6 @@ Changing a state appends to `history` automatically. Region ids and state ids in
 - Party view: several profiles side by side
 - Hit-location roll and damage-on-click for tabletop use
 - Review badges for regions that have not been touched in a while
-- Vehicle and house map presets
 
 ## Develop
 

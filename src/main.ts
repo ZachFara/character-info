@@ -17,7 +17,8 @@ import {
 } from "./profile-text.ts";
 import { PartyView, type PartyMember } from "./party.ts";
 import { NewProfileModal } from "./new-profile.ts";
-import { makeProfile, type TemplateKey } from "./presets.ts";
+import { isSvgPath, parseSvgMap, withMapRegions, type SvgMapResult } from "./svg-map.ts";
+import { makeProfile, type MapPreset, type TemplateKey } from "./presets.ts";
 import { CharacterInfoView, drawCreatePrompt, drawNotice } from "./render.ts";
 import { CharacterInfoSettingTab } from "./settings.ts";
 import type { Frontmatter, Item, PluginSettings, Profile, RegionPatch } from "./types.ts";
@@ -33,6 +34,8 @@ export default class CharacterInfoPlugin extends Plugin {
 	settings: PluginSettings = { profiles: [], defaultProfile: "", features: { inventory: false } };
 	/** Party blocks listen here so a profile added or forgotten anywhere updates them. */
 	private readonly registryListeners = new Set<() => void>();
+	/** Maps read from SVG files, by file path. Cleared for a file when it changes. */
+	private readonly svgMaps = new Map<string, SvgMapResult | "loading">();
 
 	override async onload(): Promise<void> {
 		await this.loadSettings();
@@ -56,6 +59,61 @@ export default class CharacterInfoPlugin extends Plugin {
 			this.mountParty(source, el, ctx);
 		});
 		this.addCommands();
+		this.registerEvent(
+			this.app.vault.on("modify", (file) => {
+				if (this.svgMaps.delete(file.path)) this.notifyRegistry();
+			}),
+		);
+	}
+
+	/** The SVG file a profile's map names, found by path or like a link from the note showing it. */
+	private svgFile(profile: Profile, sourcePath: string): TFile | null {
+		const path = profile.map.trim();
+		const direct = this.app.vault.getAbstractFileByPath(normalizePath(path));
+		if (direct instanceof TFile) return direct;
+		return this.app.metadataCache.getFirstLinkpathDest(path, sourcePath);
+	}
+
+	/** The loaded map for a profile, starting a read when it is not loaded yet. */
+	private svgMap(profile: Profile, sourcePath: string): SvgMapResult | "loading" | "missing" {
+		const file = this.svgFile(profile, sourcePath);
+		if (!file) return "missing";
+		const cached = this.svgMaps.get(file.path);
+		if (cached) return cached;
+		this.svgMaps.set(file.path, "loading");
+		void this.app.vault.cachedRead(file).then((text) => {
+			this.svgMaps.set(file.path, parseSvgMap(text, file.basename));
+			this.notifyRegistry();
+		});
+		return "loading";
+	}
+
+	/** The map loaded for a profile that uses an SVG file, or undefined. */
+	private loadedMap(
+		profile: Profile,
+		sourcePath: string,
+	): { map: MapPreset; names: Record<string, string> } | undefined {
+		if (!isSvgPath(profile.map)) return undefined;
+		const loaded = this.svgMap(profile, sourcePath);
+		return typeof loaded === "object" && loaded.ok ? loaded : undefined;
+	}
+
+	/**
+	 * A profile ready to draw with its map. For an SVG map this waits for the file and gives a
+	 * profile with no regions of its own one region per shape. Returns null after drawing why not.
+	 */
+	private withMap(
+		profile: Profile,
+		el: HTMLElement,
+		sourcePath: string,
+	): { profile: Profile; map?: MapPreset } | null {
+		if (!isSvgPath(profile.map)) return { profile };
+		const loaded = this.svgMap(profile, sourcePath);
+		if (loaded === "loading") drawNotice(el, "Loading the map…");
+		else if (loaded === "missing") drawNotice(el, `There is no SVG file called “${profile.map}”.`);
+		else if (!loaded.ok) drawNotice(el, `Could not use the map ${profile.map}. ${loaded.error}`);
+		else return { profile: withMapRegions(profile, loaded.map, loaded.names), map: loaded.map };
+		return null;
 	}
 
 	private notifyRegistry(): void {
@@ -70,7 +128,7 @@ export default class CharacterInfoPlugin extends Plugin {
 		let members: PartyMember[] = [];
 		let view: PartyView | null = null;
 		const build = (): void => {
-			members = this.partyMembers(block.names, block.all);
+			members = this.partyMembers(block.names, block.all, ctx.sourcePath);
 			view = new PartyView({
 				app: this.app,
 				el,
@@ -81,6 +139,7 @@ export default class CharacterInfoPlugin extends Plugin {
 				getFrontmatter: (profile) => this.frontmatterFor(profile),
 				save: (profile, regionId, patch) => this.saveRegion(profile, regionId, patch),
 				saveInventory: (profile) => this.inventorySaver(profile),
+				mapFor: (profile) => this.loadedMap(profile, ctx.sourcePath)?.map,
 			});
 			view.draw();
 		};
@@ -95,11 +154,15 @@ export default class CharacterInfoPlugin extends Plugin {
 		);
 	}
 
-	private partyMembers(names: string[], all: boolean): PartyMember[] {
-		if (all) return this.settings.profiles.map((profile) => ({ profile }));
+	private partyMembers(names: string[], all: boolean, sourcePath: string): PartyMember[] {
+		const show = (profile: Profile): PartyMember => {
+			const loaded = this.loadedMap(profile, sourcePath);
+			return { profile: loaded ? withMapRegions(profile, loaded.map, loaded.names) : profile };
+		};
+		if (all) return this.settings.profiles.map(show);
 		return names.map((name) => {
 			const profile = this.findProfile(name, true);
-			return profile ? { profile } : { missing: name };
+			return profile ? show(profile) : { missing: name };
 		});
 	}
 
@@ -132,8 +195,10 @@ export default class CharacterInfoPlugin extends Plugin {
 		const block = parseBlock(source);
 		const name = block.profile ?? this.profileFromNote(ctx.sourcePath) ?? undefined;
 		if (name !== undefined) block.profile = name;
-		const profile = this.profileForBlock(block, el, remount);
-		if (!profile) return none;
+		const defined = this.profileForBlock(block, el, remount);
+		const ready = defined ? this.withMap(defined, el, ctx.sourcePath) : null;
+		if (!ready) return none;
+		const { profile } = ready;
 		const view = new CharacterInfoView({
 			app: this.app,
 			el,
@@ -144,6 +209,7 @@ export default class CharacterInfoPlugin extends Plugin {
 			save: (regionId, patch) => this.saveRegion(profile, regionId, patch),
 			saveInventory: this.inventorySaver(profile),
 			addRegion: this.regionAdder(block, el, ctx, profile),
+			...(ready.map ? { map: ready.map } : {}),
 		});
 		view.draw();
 		return {

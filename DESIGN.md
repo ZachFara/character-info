@@ -2,13 +2,12 @@
 
 ## What it is
 
-Character Info is an Obsidian plugin that shows anything made of parts as a clickable figure. You pick a profile, such as your own body, a tabletop character or a car, click a region, and see its state, a note, what you are doing about it, what to do next, and a dated history of state changes. The model is the health tab of Project Zomboid's character window, generalized. All data lives in plain Markdown notes, so Bases, Dataview and sync keep working, and nothing is locked in a database.
+Character Info is an Obsidian plugin that shows a person as a clickable figure. You pick a profile, your own body or a tabletop character, click a region, and see its state, a note, what you are doing about it, what to do next, and a dated history of state changes. The model is the health tab of Project Zomboid's character window, generalized. All data lives in plain Markdown notes, so Bases, Dataview and sync keep working, and nothing is locked in a database.
 
 ## Users and goals
 
 - A person tracking their own body and maintenance, who wants one screen that shows what needs attention.
 - A tabletop player tracking wounds per limb for one or several characters.
-- Anyone tracking a vehicle, house or system by parts, using the blank profile.
 
 ## Concepts
 

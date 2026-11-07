@@ -56,7 +56,7 @@ test("the selected region is marked on the figure", () => {
 test("a profile with a map uses the two-column layout and one without uses the full width", () => {
 	const withMap = mount(profile("body"), {});
 	assert.equal(must(withMap, ".ci-grid").classList.contains("ci-no-map"), false);
-	const noMap: Profile = { ...profile("blank"), regions: [{ id: "engine", name: "Engine" }] };
+	const noMap: Profile = { ...profile("blank"), regions: [{ id: "tail", name: "Tail" }] };
 	assert.equal(must(mount(noMap, {}), ".ci-grid").classList.contains("ci-no-map"), true);
 });
 
@@ -293,4 +293,37 @@ test("a non-default region that was never reviewed says so", () => {
 	const el = mountOn("2026-11-06", { regions: { head: { status: "wounded" } } });
 	pick(el, "Head");
 	assert.equal(text(el, ".ci-review-text"), "Review due. Never reviewed.");
+});
+
+test("a view given a map from an SVG file draws that map's shapes and offers no armor view", () => {
+	const el = document.body.appendChild(document.createElement("div"));
+	const kaelMap = {
+		label: "Kael",
+		viewBox: "0 0 100 220",
+		shapes: {
+			head: '<circle cx="50" cy="25" r="18"/>',
+			left_wing: '<path d="M60 60 L98 40 L70 110 Z"/>',
+		},
+	};
+	new mod.CharacterInfoView({
+		app: {} as ViewOptions["app"],
+		el,
+		profile: {
+			...profile("blank"),
+			map: "kael.svg",
+			regions: [
+				{ id: "head", name: "Head" },
+				{ id: "left_wing", name: "Left wing" },
+			],
+		},
+		sourcePath: "x.md",
+		component: {} as Component,
+		getFrontmatter: () => ({ inventory: [{ name: "Helm", kind: "armor", look: "gravethorn:helm" }] }),
+		save: () => Promise.resolve(),
+		saveInventory: () => Promise.resolve(),
+		map: kaelMap,
+	}).draw();
+	assert.equal(must(el, ".ci-fig svg").getAttribute("viewBox"), "0 0 100 220");
+	assert.equal(all(el, ".ci-region").length, 2);
+	assert.equal(el.querySelector(".ci-viewtoggle"), null);
 });

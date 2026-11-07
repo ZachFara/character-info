@@ -35,7 +35,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T9. Real-Obsidian check script.** Done: `make obsidian-check` builds the plugin, starts a throwaway Obsidian with its own profile and vault, checks the body, a character, the armor view and a party, saves screenshots to `.scratch/obsidian-check/`, and exits non-zero on failure. See decision 0014.
 - [ ] **T8. Release prep.** Done when a tag builds `main.js`, `manifest.json` and `styles.css` in CI, the README has screenshots, and the community plugin checklist is satisfied.
 - [x] **T13. List indent in the card.** Done: card lists use a small dot aligned with the section title.
-- [x] **T15. Browser harness.** Done: `npm run harness` runs the whole plugin in Chrome over an in-memory vault, with settings, commands, both themes and a phone-width frame. See decision 0015. Faster than `make obsidian-check` for clicking around; results still need a real Obsidian check.
+- [x] **T15. Browser harness.** Done: `npm run harness` runs the whole plugin in Chrome over an in-memory vault, with settings, commands, both themes and a phone-width frame. See decision 0016. Faster than `make obsidian-check` for clicking around; results still need a real Obsidian check.
 
 ### Found with the browser harness
 

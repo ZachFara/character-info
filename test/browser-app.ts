@@ -1,4 +1,4 @@
-// The browser harness (decision 0015): the real plugin from src/main.ts, running in Chrome over an
+// The browser harness (decision 0016): the real plugin from src/main.ts, running in Chrome over an
 // in-memory vault, with a note list, a reading and source view, the commands and the settings tab.
 // Start it with `npm run harness`. `window.harness` exposes the same controls to scripts.
 import type { App, PluginManifest } from "obsidian";

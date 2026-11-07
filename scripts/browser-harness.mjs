@@ -1,4 +1,4 @@
-// Serves the browser harness (decision 0015): the plugin running in Chrome over an in-memory vault.
+// Serves the browser harness (decision 0016): the plugin running in Chrome over an in-memory vault.
 // Usage: npm run harness [-- --port 8765]
 // Rebuilds on every change to src/, test/ or styles.css, and the open page reloads itself.
 import esbuild from "esbuild";

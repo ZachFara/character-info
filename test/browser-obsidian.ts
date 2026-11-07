@@ -1,5 +1,5 @@
 // A browser stand-in for the parts of Obsidian's API the plugin uses, so the whole plugin can run in
-// Chrome (decision 0015). The browser harness bundles src/main.ts with `obsidian` pointed here.
+// Chrome (decision 0016). The browser harness bundles src/main.ts with `obsidian` pointed here.
 // Class and CSS class names follow Obsidian's, so the plugin's styles apply as they would there.
 import { installDomHelpers } from "./obsidian-stub.ts";
 import { renderMarkdown } from "./browser-markdown.ts";

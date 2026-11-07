@@ -1,4 +1,4 @@
-# 0015. A browser harness runs the whole plugin in Chrome
+# 0016. A browser harness runs the whole plugin in Chrome
 
 ## Context
 

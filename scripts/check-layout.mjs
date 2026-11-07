@@ -33,6 +33,7 @@ const ALLOWED_DIRS = [
 	{ dir: ".github/", pattern: /^\.github\/(workflows\/[\w.-]+\.yml|pull_request_template\.md)$/ },
 	{ dir: ".githooks/", pattern: /^\.githooks\/(pre-commit|commit-msg)$/ },
 	{ dir: "docs/decisions/", pattern: /^docs\/decisions\/\d{4}-[a-z0-9-]+\.md$/ },
+	{ dir: "docs/images/", pattern: /^docs\/images\/[a-z0-9-]+\.png$/ },
 	{ dir: "scripts/", pattern: /^scripts\/[\w-]+\.(mjs|sh)$/ },
 	{ dir: "src/", pattern: /^src\/[\w-]+\.ts$/ },
 	{ dir: "test/", pattern: /^test\/[\w.-]+\.ts$/ },

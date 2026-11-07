@@ -33,7 +33,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T14. Edit inventory items.** Done: a pencil on each item opens an inline form for name, note, kind, region and, for armor, the drawing shown on the figure. Checked in real Obsidian.
 - [x] **T7. Custom SVG maps.** Done as text: `map: Maps/kael.svg` (any SVG) in the block. Shapes with an id become regions, named from data-name, a title or the id. The file is sanitized to plain shapes and geometry, reloads when it changes, and gives a profile with no regions one per shape. Checked in real Obsidian. See decision 0013.
 - [x] **T9. Real-Obsidian check script.** Done: `make obsidian-check` builds the plugin, starts a throwaway Obsidian with its own profile and vault, checks the body, a character, the armor view and a party, saves screenshots to `.scratch/obsidian-check/`, and exits non-zero on failure. See decision 0014.
-- [ ] **T8. Release prep.** Done when a tag builds `main.js`, `manifest.json` and `styles.css` in CI, the README has screenshots, and the community plugin checklist is satisfied.
+- [x] **T8. Release prep.** Done up to publishing: version 0.2.0, a people-first manifest description, a `release` workflow that makes a draft release from a tag after `make check`, README pictures from `make readme-images`, and a submission checklist in AGENTS.md. Not published: that needs a public repo and a tag, both the owner's call. Mobile is untested. See decision 0015.
 - [x] **T13. List indent in the card.** Done: card lists use a small dot aligned with the section title.
 
 ## Decisions made on the owner's go-ahead

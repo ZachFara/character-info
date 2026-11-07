@@ -4,7 +4,13 @@ A clickable character screen for people: your own body, or the characters in you
 
 Everything is stored in plain notes, so Bases, Dataview and sync all work.
 
-> **Status: 0.1, early.** The logic and rendering are covered by tests that run outside Obsidian. It has not yet been used inside a real vault, so expect rough edges.
+> **Status: 0.2, early.** Tested with unit tests and in real Obsidian 1.15 on the desktop. Not yet tried on mobile.
+
+![Your own body: each region has a state, notes and a history](docs/images/body.png)
+
+![A tabletop character in Gravethorn armor, with the Body and Armor views](docs/images/armor.png)
+
+![A party: everyone at a glance](docs/images/party.png)
 
 ## Use it
 

@@ -1,5 +1,5 @@
 # `make check` is the single gate. The pre-commit hook and CI both run exactly this.
-.PHONY: check setup format obsidian-check
+.PHONY: check setup format obsidian-check readme-images
 
 check:
 	npx prettier --check .
@@ -21,3 +21,8 @@ format:
 # Runs the plugin in a real, throwaway Obsidian. Needs Obsidian installed; not part of check.
 obsidian-check:
 	node scripts/obsidian-check.mjs
+
+# Refreshes the README pictures from a real, throwaway Obsidian.
+readme-images:
+	mkdir -p docs/images
+	node scripts/obsidian-check.mjs --readme

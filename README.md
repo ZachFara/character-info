@@ -77,6 +77,8 @@ Off by default. Turn it on under **Settings, Character Info, Inventory**. Each p
 - Pick where an item is worn or held, such as armor on the torso or a sword in the right arm, or leave it as carried.
 - A note link in a name, like `[[Plate carrier]]`, is a real link. The plus and minus buttons change the quantity and the cross removes an item.
 - Items are saved in the profile's data note under `inventory:`.
+- **Starter kits** add a ready-made set in one click, placed on the regions your profile has. There are three: a modern soldier loadout, a medieval knight, and Gravethorn warplate, an original dark fantasy set of black horned plate with jagged edges and an ember glow in the seams. A kit never adds a piece you already have, so pressing it twice is safe.
+- Selecting a region lists the items worn or held there.
 
 ## Where the data lives
 

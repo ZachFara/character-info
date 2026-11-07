@@ -462,3 +462,13 @@
 	flex: 1 1 140px;
 	min-width: 0;
 }
+
+.ci-kit-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-3);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}

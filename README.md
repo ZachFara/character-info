@@ -1,20 +1,22 @@
 # Character Info
 
-A clickable character screen for people: your own body, or the characters in your tabletop games. Click a region on the figure and see its state, notes, what you are doing about it and what to do next. Think of the health tab in Project Zomboid's character window.
+**A character screen for your notes.** Track your own body like a game's health screen, or keep a whole tabletop party at a glance, with armor drawn right on the figure.
 
-Everything is stored in plain notes, so Bases, Dataview and sync all work.
+![Three profiles: a person's body with a few areas flagged, a knight in Gravethorn armor, and a soldier in modern kit](docs/images/hero.png)
 
-> **Status: 0.2, early.** Tested with unit tests and in real Obsidian 1.15 on the desktop. Not yet tried on mobile.
+Click a part of the figure to see how it is doing, what you are doing about it, what to do next, and its history. Everything lives in plain Markdown notes, so search, links, Bases, Dataview and sync all keep working. Nothing leaves your vault.
 
-![Your own body: each region has a state, notes and a history](docs/images/body.png)
+- **For your body.** Twenty-three areas from head to bloodwork, each with a state, notes, a to-do list, links to your notes and a dated history. Gentle reminders flag what you have not looked at in a while.
+- **For your tabletop party.** Characters with wounds limb by limb, a party view of everyone at once, an inventory with starter kits, and armor you can see.
+- **Plain text all the way down.** A profile is a few lines in a code block. Edit the text and the figure follows.
 
-![A tabletop character in Gravethorn armor, with the Body and Armor views](docs/images/armor.png)
+## Quick start
 
-![A party: everyone at a glance](docs/images/party.png)
+1. Install **Character Info** from Community plugins and enable it.
+2. In any note, open the command palette and run **Character Info: New profile**. Pick a name and a template.
+3. Click a part of the figure, then pick a state with one click.
 
-## Use it
-
-Put a block in any note. The text of the block is the profile, so there is nothing to set up first.
+That inserts a block like this. You can also type it yourself:
 
 ````
 ```character-info
@@ -23,17 +25,54 @@ template: character
 ```
 ````
 
-Easiest start: open the command palette in a note and run **Character Info: New profile**. It asks for a name and a template and inserts the block. **New profile, full template** inserts every key, with the template's values and short comment lines, so everything you can change is already in the text.
+A block with only `profile: Thorn` shows a profile defined elsewhere. If the name does not exist yet, the block offers buttons to create it, so a typo never makes a profile on its own.
 
-Click a region and pick a state with one click. To add a task, a fix or a link without opening anything, use the small row at the bottom of the card: choose Doing, To fix or Link a note, type, and press Enter. Link mode suggests your notes as you type and stores a real `[[link]]`. Hover an item and press the cross to remove it. **Edit** is there for longer text. The dashed **+ Add region** chip adds a region by writing it into the block's `add:` line for you, so the text stays the source of truth.
+## Your body
 
-Click a region, press **Edit**, pick a state, write a note, save. Your first save creates the profile's data note.
+![Your own body: each area has a state, notes, a to-do list and a history](docs/images/body.png)
 
-A block with only `profile: Thorn` shows a profile that is defined elsewhere. A name that does not exist yet shows buttons to create it from a template, so a typo never creates a profile on its own.
+- **One click to change a state.** Every change is added to the area's history with the date.
+- **Quick notes.** The row at the bottom of the card adds a Doing item, a To fix item, or a link to a note, which suggests your notes as you type. Hover an item and press the cross to remove it.
+- **Review reminders.** An area that is not in its default state asks to be looked at again after 30 days without an update. Its chip gets a small ring and the header counts how many are due. **Mark reviewed** resets the clock. Change the period with `review: 14`, turn it off for one profile with `review: 0`, or switch it off everywhere in settings.
+- **Only problems get colour.** Areas in their default state stay grey, so what needs attention stands out.
 
-## Change a profile by editing its text
+## Tabletop characters
 
-Every line after `profile:` is optional. Lines that start with `#` are comments.
+![A knight in Gravethorn armor, with the Body and Armor views](docs/images/armor.png)
+
+The **character** template has a head, torso, two arms and two legs, with Healthy, Bruised, Wounded, Severe and Lost.
+
+### Party
+
+![A party: everyone at a glance, each with their worst wound](docs/images/party.png)
+
+````
+```character-party
+title: The Company
+Thorn
+Mira
+Kestrel
+```
+````
+
+Each member gets a tile with a small figure, their worst wound and a count of each problem. Click a tile to open that character in full, edit them, and press **Back**. Write `all` instead of names to show every profile, including new ones. **New party** in the command palette inserts one.
+
+### Inventory and armor
+
+![An inventory: weapons and armor, each worn on a part of the body](docs/images/inventory.png)
+
+Turn on **Settings, Character Info, Inventory**. Each profile then gets an inventory of weapons, armor and gear, with quantities, notes, and where each piece is worn or held.
+
+- **Starter kits** add a full set in one click: a **modern soldier** loadout, or **Gravethorn warplate**, an original dark fantasy set of black horned plate with spiked pauldrons and ember light in its seams. Pieces land on the right limbs, and pressing it twice adds nothing twice.
+- **Armor view.** When a profile wears armor that has a drawing, a **Body / Armor** switch appears above the figure. Armor view draws the gear on the figure.
+- **Edit anything** with the pencil: name, note, kind, where it is worn, and which drawing shows it. Armor you typed in yourself can be drawn too.
+- Selecting a part lists what is worn or held there.
+
+![A soldier in modern kit: helmet, plate carrier, gloves, knee pads and boots](docs/images/soldier.png)
+
+## Change anything with text
+
+Every line after `profile:` is optional. Lines that start with `#` are comments. **New profile, full template** in the command palette writes all of them out for you.
 
 ````
 ```character-info
@@ -49,55 +88,39 @@ review: 30                           # days before a changed region asks to be r
 ```
 ````
 
-- **Regions** match by name or id, ignoring case. Add a name that matches a map shape, such as `neck`, and the shape comes back.
-- **States** go best first. The first is the default, drawn neutral. Colours are chosen for you, and `Bruised=#e5c13b` sets one.
-- **Stored data stays attached.** Region and state ids do not change when you rename, so your notes keep their meaning.
-- The block you write is the source of truth. Delete a line and its effect goes away.
+- **Regions** match by name or id, ignoring case. The dashed **+ Add region** chip on the card writes to the `add:` line for you.
+- **States** go best first. The first is the default and is drawn grey. Colours are chosen for you, and `Bruised=#e5c13b` sets one.
+- **Your data stays attached.** Renaming keeps the underlying ids, so old notes keep their meaning.
+- The block is the source of truth. Delete a line and its effect goes away.
 
-| Template | Map | States |
+| Template | Figure | States |
 |---|---|---|
-| body | 23 regions, 16 drawn | Dialed in, Maintaining, Needs work, Injured, Untracked |
+| body | 23 areas, 16 drawn | Dialed in, Maintaining, Needs work, Injured, Untracked |
 | character | head, torso, two arms, two legs | Healthy, Bruised, Wounded, Severe, Lost |
-| blank | none, chips only | Working, Worn, Failing, Broken, Unchecked |
+| blank | no figure, a list of chips | Working, Worn, Failing, Broken, Unchecked |
 
-## Review reminders
+## Where the data lives
 
-A region that is not in its default state asks to be looked at again once it has gone untouched for a while: 30 days unless the block says otherwise. Its chip gets a small ring, the header counts how many are due, and the card says how long it has been, with a **Mark reviewed** button. Any save counts as a review. Set the period with `review: 14` in the block, or turn it off for one profile with `review: 0`. To turn reminders off everywhere, switch off **Settings, Character Info, Review reminders**.
+Each profile keeps its data in one note, `Character Info/<Profile>.md` by default:
 
-## Party
-
-Show several profiles side by side, which is handy for tabletop. Use a different block:
-
-````
-```character-party
-title: The Company
-Thorn
-Mira
-Kestrel
+```yaml
+---
+character-info-profile: Me
+regions:
+  hips:
+    status: hurt
+    note: Sore after a long run.
+    fix: [Rest a week]
+    history:
+      - { date: 2026-11-06, from: unknown, to: hurt }
+---
 ```
-````
 
-- One name per line, or separated by commas. `all` shows every profile and follows new ones as you create them. **New party** in the command palette inserts an `all` block.
-- Each tile has a small figure, the worst region, and a count of each problem state.
-- Click a tile to open that profile in full, edit it, and use **Back** to return.
-- A name with no profile gets a dashed tile that says so.
-
-## Inventory
-
-Off by default. Turn it on under **Settings, Character Info, Inventory**. Each profile then shows an inventory under the figure.
-
-- Items are weapons, armor or gear, with a quantity and an optional note.
-- Pick where an item is worn or held, such as armor on the torso or a sword in the right arm, or leave it as carried.
-- A note link in a name, like `[[Plate carrier]]`, is a real link. The plus and minus buttons change the quantity and the cross removes an item.
-- Items are saved in the profile's data note under `inventory:`.
-- **Starter kits** add a ready-made set in one click, placed on the regions your profile has. There are two: a modern soldier loadout, and Gravethorn warplate, an original dark fantasy set of black horned plate with spiked pauldrons and an ember glow in the seams. A kit never adds a piece you already have, so pressing it twice is safe.
-- **Edit any item** with the pencil: change its name, note, kind, where it is worn or held, and for armor, which drawing shows it on the figure. That is how armor you typed in yourself gets drawn.
-- **Armor view.** Kit armor is drawn on the figure. When a profile wears any, a **Body / Armor** switch appears above the figure. Body shows the states, Armor shows the gear. With no drawable armor there is no switch. Kit armor comes with drawings, and any armor can get one through Edit.
-- Selecting a region lists the items worn or held there.
+The plugin never connects to the internet and stores nothing outside your vault.
 
 ## Your own figure
 
-The built-in figures are a body and a tabletop character. You can also draw your own figure in any SVG editor, such as a character with wings or a tail, or even something that is not a person, like a ship. Give each part an `id`, save the file in your vault, and point a block at it:
+Draw any figure in an SVG editor, such as a character with wings or a tail, or something that is not a person at all, like a ship. Give each part an `id`, save it in your vault, and point a block at it:
 
 ````
 ```character-info
@@ -107,35 +130,7 @@ states: Sound, Worn, Damaged, Broken
 ```
 ````
 
-- Every shape or group with an `id` becomes a region. Its name comes from a `data-name` attribute or a `<title>`, otherwise from the id, so `main_sail` reads as "Main sail".
-- If the block adds no regions, they come straight from the drawing. Edit the SVG and the map reloads.
-- The file is treated as untrusted: only plain shapes and their geometry are kept. Scripts, styles, colours, links and images are dropped. Armor view is for the built-in figure, so custom maps do not have it.
-
-## Where the data lives
-
-One note per profile, by default `Character Info/<Profile>.md`:
-
-```yaml
----
-character-info-profile: Me
-regions:
-  hips:
-    status: hurt
-    note: Sore after a long run.
-    fix: [Stop single-leg work]
-    history:
-      - { date: 2026-11-06, from: unknown, to: hurt }
----
-```
-
-Changing a state appends to `history` automatically. Region ids and state ids in the file match the ids in settings.
-
-## Roadmap
-
-- A click-to-assign editor for custom SVG maps
-- Party view: several profiles side by side
-- Hit-location roll and damage-on-click for tabletop use
-- Review badges for regions that have not been touched in a while
+Every shape or group with an `id` becomes a region, named from a `data-name` attribute, a `<title>`, or the id. Edit the SVG and the figure reloads. Only plain shapes are kept from the file, so scripts, styles and links are dropped. Armor view works on the built-in figures only.
 
 ## Develop
 
@@ -145,6 +140,6 @@ make check        # format, lint, types, dead code, boundaries, layout, tests, b
 scripts/deploy.sh /path/to/vault
 ```
 
-Agents and contributors should read `AGENTS.md` first. The design is in `DESIGN.md` and current work is in `PROGRESS.md`.
+Contributors should read `AGENTS.md` first. The design is in `DESIGN.md` and current work is in `PROGRESS.md`.
 
 MIT licensed.

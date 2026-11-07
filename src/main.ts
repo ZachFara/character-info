@@ -6,7 +6,7 @@ import {
 	normalizePath,
 	type MarkdownPostProcessorContext,
 } from "obsidian";
-import { applyEdit, normalizeSettings, parseBlock } from "./data.ts";
+import { applyEdit, applyInventory, normalizeSettings, parseBlock } from "./data.ts";
 import {
 	isDefinition,
 	newProfileBlock,
@@ -19,7 +19,7 @@ import { NewProfileModal } from "./new-profile.ts";
 import { makeProfile, type TemplateKey } from "./presets.ts";
 import { CharacterInfoView, drawCreatePrompt, drawNotice } from "./render.ts";
 import { CharacterInfoSettingTab } from "./settings.ts";
-import type { Frontmatter, PluginSettings, Profile, RegionPatch } from "./types.ts";
+import type { Frontmatter, Item, PluginSettings, Profile, RegionPatch } from "./types.ts";
 
 /** What a mounted block exposes so the plugin can refresh it when data changes. */
 interface Mounted {
@@ -29,7 +29,7 @@ interface Mounted {
 
 export default class CharacterInfoPlugin extends Plugin {
 	/** Edited in place, never reassigned, because the settings tab holds a reference. */
-	settings: PluginSettings = { profiles: [], defaultProfile: "" };
+	settings: PluginSettings = { profiles: [], defaultProfile: "", features: { inventory: false } };
 	/** Party blocks listen here so a profile added or forgotten anywhere updates them. */
 	private readonly registryListeners = new Set<() => void>();
 
@@ -79,6 +79,7 @@ export default class CharacterInfoPlugin extends Plugin {
 				component: child,
 				getFrontmatter: (profile) => this.frontmatterFor(profile),
 				save: (profile, regionId, patch) => this.saveRegion(profile, regionId, patch),
+				saveInventory: (profile) => this.inventorySaver(profile),
 			});
 			view.draw();
 		};
@@ -110,6 +111,8 @@ export default class CharacterInfoPlugin extends Plugin {
 			mounted = this.drawBlock(source, el, ctx, child, mount);
 		};
 		mount();
+		this.registryListeners.add(mount);
+		child.register(() => this.registryListeners.delete(mount));
 		child.registerEvent(
 			this.app.metadataCache.on("changed", (file) => {
 				if (mounted.dataPath !== null && file.path === normalizePath(mounted.dataPath)) mounted.redraw();
@@ -138,6 +141,7 @@ export default class CharacterInfoPlugin extends Plugin {
 			component: child,
 			getFrontmatter: () => this.frontmatterFor(profile),
 			save: (regionId, patch) => this.saveRegion(profile, regionId, patch),
+			saveInventory: this.inventorySaver(profile),
 		});
 		view.draw();
 		return {
@@ -264,6 +268,22 @@ export default class CharacterInfoPlugin extends Plugin {
 		const folder = path.split("/").slice(0, -1).join("/");
 		if (folder && !this.app.vault.getAbstractFileByPath(folder)) await this.app.vault.createFolder(folder);
 		return this.app.vault.create(path, `---\ncharacter-info-profile: ${profile.name}\nregions: {}\n---\n`);
+	}
+
+	/** The inventory writer for a profile, or null when the inventory feature is switched off. */
+	private inventorySaver(profile: Profile): ((items: Item[]) => Promise<void>) | null {
+		if (!this.settings.features.inventory) return null;
+		return async (items) => {
+			try {
+				const file = await this.ensureDataFile(profile);
+				await this.app.fileManager.processFrontMatter(file, (fm: Frontmatter) => {
+					applyInventory(fm, items);
+				});
+			} catch (err) {
+				console.error("Character Info: could not save the inventory", err);
+				new Notice("Character Info: could not save the inventory. See the console for details.");
+			}
+		};
 	}
 
 	private async saveRegion(profile: Profile, regionId: string, patch: RegionPatch): Promise<void> {

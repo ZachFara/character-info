@@ -38,6 +38,7 @@ function mount(members: PartyMember[], title: string | null = null): Mounted {
 			saved.push([p.name, regionId, patch]);
 			return Promise.resolve();
 		},
+		saveInventory: () => null,
 	};
 	const view = new PartyView(opts);
 	view.draw();

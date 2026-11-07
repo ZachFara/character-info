@@ -1,7 +1,16 @@
 import { MarkdownRenderer, type App, type Component } from "obsidian";
 import { TEMPLATES, getMap, type MapPreset, type TemplateKey } from "./presets.ts";
-import { isUnknownStatus, pickInitial, readRegion, resolveState, tally, toList } from "./data.ts";
-import type { Frontmatter, Profile, Region, RegionData, RegionPatch, State } from "./types.ts";
+import {
+	isUnknownStatus,
+	pickInitial,
+	readInventory,
+	readRegion,
+	resolveState,
+	tally,
+	toList,
+} from "./data.ts";
+import { drawInventory } from "./inventory-view.ts";
+import type { Frontmatter, Item, Profile, Region, RegionData, RegionPatch, State } from "./types.ts";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PIPS = 5;
@@ -17,6 +26,8 @@ export interface ViewOptions {
 	getFrontmatter: () => Frontmatter;
 	/** Writes an edit to the profile note. */
 	save: (regionId: string, patch: RegionPatch) => Promise<void>;
+	/** Writes the inventory. Null when the inventory feature is off, which hides the panel. */
+	saveInventory: ((items: Item[]) => Promise<void>) | null;
 }
 
 /** Turns a trusted preset string like `<rect .../>` into SVG nodes. */
@@ -131,6 +142,20 @@ export class CharacterInfoView {
 		const side = grid.createDiv({ cls: "ci-side" });
 		this.drawCard(side, fm);
 		this.drawRoster(side, fm);
+		this.drawInventoryPanel(root, fm);
+	}
+
+	private drawInventoryPanel(root: HTMLElement, fm: Frontmatter): void {
+		const save = this.o.saveInventory;
+		if (!save) return;
+		drawInventory(root, {
+			items: readInventory(fm),
+			regions: this.o.profile.regions,
+			save,
+			markdown: (target, text) => {
+				this.markdown(target, text);
+			},
+		});
 	}
 
 	private select(id: string): void {

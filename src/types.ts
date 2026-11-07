@@ -29,6 +29,19 @@ export interface Profile {
 export interface PluginSettings {
 	profiles: Profile[];
 	defaultProfile: string;
+	/** Optional features, each off until switched on in settings. */
+	features: { inventory: boolean };
+}
+
+export type ItemKind = "weapon" | "armor" | "gear";
+
+/** One thing a profile carries. `region` is where it is worn or held, or null when it is just carried. */
+export interface Item {
+	name: string;
+	kind: ItemKind;
+	qty: number;
+	note: string;
+	region: string | null;
 }
 
 export interface HistoryEntry {

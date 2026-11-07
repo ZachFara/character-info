@@ -23,6 +23,7 @@ export class CharacterInfoSettingTab extends PluginSettingTab {
 			cls: "setting-item-description",
 			text: "Profiles are defined by the text of a character-info block in a note. This list follows them automatically.",
 		});
+		this.drawFeatures();
 		this.drawDefaultProfile();
 		new Setting(this.containerEl).setName("Profiles").setHeading();
 		const { profiles } = this.actions.settings;
@@ -33,6 +34,21 @@ export class CharacterInfoSettingTab extends PluginSettingTab {
 			});
 		}
 		for (const p of profiles) this.drawProfile(p);
+	}
+
+	private drawFeatures(): void {
+		const s = this.actions.settings;
+		new Setting(this.containerEl)
+			.setName("Inventory")
+			.setDesc(
+				"Show an inventory under each profile: weapons, armor and gear, stored in the profile's data note.",
+			)
+			.addToggle((t) =>
+				t.setValue(s.features.inventory).onChange(async (v) => {
+					s.features.inventory = v;
+					await this.actions.save();
+				}),
+			);
 	}
 
 	private drawDefaultProfile(): void {

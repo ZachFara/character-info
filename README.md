@@ -69,6 +69,15 @@ Kestrel
 - Click a tile to open that profile in full, edit it, and use **Back** to return.
 - A name with no profile gets a dashed tile that says so.
 
+## Inventory
+
+Off by default. Turn it on under **Settings, Character Info, Inventory**. Each profile then shows an inventory under the figure.
+
+- Items are weapons, armor or gear, with a quantity and an optional note.
+- Pick where an item is worn or held, such as armor on the torso or a sword in the right arm, or leave it as carried.
+- A note link in a name, like `[[Plate carrier]]`, is a real link. The plus and minus buttons change the quantity and the cross removes an item.
+- Items are saved in the profile's data note under `inventory:`.
+
 ## Where the data lives
 
 One note per profile, by default `Character Info/<Profile>.md`:

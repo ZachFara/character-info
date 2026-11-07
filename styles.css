@@ -384,3 +384,81 @@
 	margin-bottom: var(--size-4-2);
 	font-size: var(--font-ui-smaller);
 }
+
+/* Inventory */
+.ci-inventory {
+	margin-top: var(--size-4-4);
+	padding-top: var(--size-4-3);
+	border-top: 1px solid var(--background-modifier-border);
+}
+.ci-inv-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	margin-bottom: var(--size-4-2);
+}
+.ci-inv-title {
+	margin: 0;
+	font-size: var(--font-ui-medium);
+	font-weight: var(--font-semibold);
+}
+.ci-inv-count {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+.ci-inv-group {
+	margin-top: var(--size-4-2);
+}
+.ci-item {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-3);
+	padding: var(--size-4-1) 0;
+}
+.ci-item-qty {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	flex: none;
+}
+.ci-item-n {
+	min-width: 1.5em;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+.ci-inv-btn {
+	min-width: 24px;
+	height: 24px;
+	padding: 0;
+	line-height: 1;
+}
+.ci-item-body {
+	flex: 1;
+	min-width: 0;
+}
+.ci-item-name p {
+	margin: 0;
+	display: inline;
+}
+.ci-item-note {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+.ci-item-region {
+	flex: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	background: var(--background-modifier-hover);
+	border-radius: 999px;
+	padding: 1px var(--size-4-2);
+}
+.ci-item-add {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-3);
+}
+.ci-item-add input[type="text"] {
+	flex: 1 1 140px;
+	min-width: 0;
+}

@@ -99,7 +99,7 @@ test("opens on the worst region and colours it by state", () => {
 	const el = mount(profile("body"), fm);
 	assert.equal(text(el, ".ci-name"), "Hips & Low Back");
 	assert.equal(text(el, ".ci-note"), "SI joint");
-	assert.equal(must(el, '.ci-region[data-region="hips"]').style.fill, "#e5534b");
+	assert.equal(must(el, '.ci-region[data-region="hips"]').style.getPropertyValue("--ci-c"), "#e5534b");
 	assert.match(text(el, ".ci-legend"), /Injured 1/);
 	assert.match(text(el, ".ci-legend"), /Needs work 1/);
 });
@@ -116,6 +116,27 @@ test("character profile uses its own states and a six-part map", () => {
 	assert.equal(text(el, ".ci-name"), "Left arm");
 	assert.match(text(el, ".ci-legend"), /Lost 1/);
 	assert.match(text(el, ".ci-legend"), /Healthy 5/);
+});
+
+test("regions in the default state are drawn neutral and the rest carry their colour", () => {
+	const el = mount(profile("character"), { regions: { legR: { status: "wounded" } } });
+	assert.equal(all(el, ".ci-region.is-default").length, 5);
+	const wounded = must(el, '.ci-region[data-region="legR"]');
+	assert.equal(wounded.classList.contains("is-default"), false);
+	assert.equal(wounded.style.getPropertyValue("--ci-c"), "#e8883a");
+});
+
+test("the selected region is marked on the figure", () => {
+	const el = mount(profile("body"), { regions: { hips: { status: "hurt" } } });
+	assert.equal(all(el, ".ci-region.is-sel").length, 1);
+	assert.equal(must(el, ".ci-region.is-sel").dataset.region, "hips");
+});
+
+test("a profile with a map uses the two-column layout and one without uses the full width", () => {
+	const withMap = mount(profile("body"), {});
+	assert.equal(must(withMap, ".ci-grid").classList.contains("ci-no-map"), false);
+	const noMap: Profile = { ...profile("blank"), regions: [{ id: "engine", name: "Engine" }] };
+	assert.equal(must(mount(noMap, {}), ".ci-grid").classList.contains("ci-no-map"), true);
 });
 
 test("blank profile has no figure and explains itself", () => {

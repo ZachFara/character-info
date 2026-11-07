@@ -294,3 +294,36 @@ test("a non-default region that was never reviewed says so", () => {
 	pick(el, "Head");
 	assert.equal(text(el, ".ci-review-text"), "Review due. Never reviewed.");
 });
+
+test("a view given a map from an SVG file draws that map's shapes and offers no armor view", () => {
+	const el = document.body.appendChild(document.createElement("div"));
+	const shipMap = {
+		label: "Ship",
+		viewBox: "0 0 200 100",
+		shapes: {
+			hull: '<rect x="0" y="50" width="200" height="40"/>',
+			engine: '<circle cx="20" cy="40" r="8"/>',
+		},
+	};
+	new mod.CharacterInfoView({
+		app: {} as ViewOptions["app"],
+		el,
+		profile: {
+			...profile("blank"),
+			map: "ship.svg",
+			regions: [
+				{ id: "hull", name: "Hull" },
+				{ id: "engine", name: "Engine" },
+			],
+		},
+		sourcePath: "x.md",
+		component: {} as Component,
+		getFrontmatter: () => ({ inventory: [{ name: "Helm", kind: "armor", look: "gravethorn:helm" }] }),
+		save: () => Promise.resolve(),
+		saveInventory: () => Promise.resolve(),
+		map: shipMap,
+	}).draw();
+	assert.equal(must(el, ".ci-fig svg").getAttribute("viewBox"), "0 0 200 100");
+	assert.equal(all(el, ".ci-region").length, 2);
+	assert.equal(el.querySelector(".ci-viewtoggle"), null);
+});

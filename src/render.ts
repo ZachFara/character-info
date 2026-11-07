@@ -48,6 +48,8 @@ export interface ViewOptions {
 	addRegion?: (name: string) => void;
 	/** Today as YYYY-MM-DD, for review badges. Tests pass a fixed day. */
 	today?: () => string;
+	/** A map loaded from an SVG file. Absent for the built-in maps. */
+	map?: MapPreset;
 }
 
 /** Turns a trusted preset string like `<rect .../>` into SVG nodes. */
@@ -104,8 +106,12 @@ function figureSvg(profile: Profile, map: MapPreset, fm: Frontmatter, o: FigureO
 }
 
 /** A small, non-interactive figure for party tiles. Draws nothing when the profile has no map. */
-export function drawMiniFigure(parent: HTMLElement, profile: Profile, fm: Frontmatter): void {
-	const map = getMap(profile.map);
+export function drawMiniFigure(
+	parent: HTMLElement,
+	profile: Profile,
+	fm: Frontmatter,
+	map: MapPreset = getMap(profile.map),
+): void {
 	if (!profile.regions.some((r) => map.shapes[r.id] !== undefined)) return;
 	const fig = parent.createDiv({ cls: "ci-mini" });
 	fig.appendChild(figureSvg(profile, map, fm, { selected: null }));
@@ -149,7 +155,7 @@ export class CharacterInfoView {
 	private readonly map: MapPreset;
 
 	constructor(private readonly o: ViewOptions) {
-		this.map = getMap(o.profile.map);
+		this.map = o.map ?? getMap(o.profile.map);
 	}
 
 	/** Redraws everything from the profile note's current data. */
@@ -213,7 +219,9 @@ export class CharacterInfoView {
 
 	/** Armor drawings for the inventory's worn pieces. Empty when the inventory is off or nothing has a drawing. */
 	private armorOnShow(fm: Frontmatter): string[] {
-		return this.o.saveInventory ? armorMarkup(armorLooks(readInventory(fm))) : [];
+		// Armor is drawn for the built-in figure, so a map from an SVG file has no armor view.
+		if (!this.o.saveInventory || this.o.map) return [];
+		return armorMarkup(armorLooks(readInventory(fm)));
 	}
 
 	private drawFigure(grid: HTMLElement, fm: Frontmatter): void {

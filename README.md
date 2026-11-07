@@ -38,7 +38,7 @@ remove: Torso                        # hide regions
 rename: Left arm = Sword arm         # separate several with ;
 states: Healthy, Bruised, Wounded, Severe, Lost
 default: Healthy                     # the first state unless you say otherwise
-map: humanoid                        # body, humanoid or none
+map: humanoid                        # body, humanoid, none, or an SVG file
 review: 30                           # days before a changed region asks to be reviewed
 ```
 ````
@@ -53,6 +53,22 @@ review: 30                           # days before a changed region asks to be r
 | body | 23 regions, 16 drawn | Dialed in, Maintaining, Needs work, Injured, Untracked |
 | character | head, torso, two arms, two legs | Healthy, Bruised, Wounded, Severe, Lost |
 | blank | none, chips only | Working, Worn, Failing, Broken, Unchecked |
+
+## Your own map
+
+Draw anything in an SVG editor, give each part an `id`, save it in your vault, and point a block at it:
+
+````
+```character-info
+profile: Sea Wolf
+map: Maps/ship.svg
+states: Sound, Worn, Damaged, Broken
+```
+````
+
+- Every shape or group with an `id` becomes a region. Its name comes from a `data-name` attribute or a `<title>`, otherwise from the id, so `sail_mast` reads as "Sail mast".
+- If the block adds no regions, they come straight from the drawing. Edit the SVG and the map reloads.
+- The file is treated as untrusted: only plain shapes and their geometry are kept. Scripts, styles, colours, links and images are dropped. Armor view is for the built-in figure, so custom maps do not have it.
 
 ## Review reminders
 

@@ -1,6 +1,7 @@
 // Turns the text of a character-info block into a profile. Pure logic, no Obsidian imports.
 import { DEFAULT_REVIEW_DAYS, slug, uniqueId } from "./data.ts";
 import { MAPS, STATE_SETS, TEMPLATES, getMap, makeProfile, type TemplateKey } from "./presets.ts";
+import { isSvgPath } from "./svg-map.ts";
 import type { Profile, Region, State } from "./types.ts";
 
 export type ResolveResult = { ok: true; profile: Profile; warnings: string[] } | { ok: false; error: string };
@@ -185,9 +186,14 @@ export function resolveDefinition(
 	}
 	const profile = makeProfile(template, name, []);
 	if (existing) profile.id = existing.id;
-	const map = nonEmpty(block.map).toLowerCase();
-	if (map && !(map in MAPS))
-		return { ok: false, error: `Unknown map “${map}”. Use ${Object.keys(MAPS).join(", ")}.` };
+	const rawMap = nonEmpty(block.map);
+	const map = isSvgPath(rawMap) ? rawMap : rawMap.toLowerCase();
+	if (map && !isSvgPath(map) && !(map in MAPS)) {
+		return {
+			ok: false,
+			error: `Unknown map “${map}”. Use ${Object.keys(MAPS).join(", ")}, or the path of an SVG file.`,
+		};
+	}
 	if (map) profile.map = map;
 
 	const warnings: string[] = [];

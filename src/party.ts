@@ -1,6 +1,7 @@
 import type { App, Component } from "obsidian";
 import { summarizeProfile } from "./data.ts";
 import { CharacterInfoView, drawMiniFigure } from "./render.ts";
+import type { MapPreset } from "./presets.ts";
 import type { Frontmatter, Item, Profile, RegionPatch } from "./types.ts";
 
 /** A party member is a known profile, or a name that has no profile yet. */
@@ -17,6 +18,8 @@ export interface PartyOptions {
 	save: (profile: Profile, regionId: string, patch: RegionPatch) => Promise<void>;
 	/** The inventory writer for a profile, or null when the inventory feature is off. */
 	saveInventory: (profile: Profile) => ((items: Item[]) => Promise<void>) | null;
+	/** The map loaded from an SVG file for a profile that uses one. */
+	mapFor?: (profile: Profile) => MapPreset | undefined;
 }
 
 /** Several profiles side by side. A tile opens that profile in full, with a way back. */
@@ -85,7 +88,7 @@ export class PartyView {
 				open();
 			}
 		});
-		drawMiniFigure(tile, profile, fm);
+		drawMiniFigure(tile, profile, fm, this.o.mapFor?.(profile));
 		const body = tile.createDiv({ cls: "ci-tile-body" });
 		body.createDiv({ cls: "ci-tile-name", text: profile.name });
 		this.drawSummary(body, profile, fm);
@@ -128,6 +131,7 @@ export class PartyView {
 			getFrontmatter: () => this.o.getFrontmatter(profile),
 			save: (regionId, patch) => this.o.save(profile, regionId, patch),
 			saveInventory: this.o.saveInventory(profile),
+			...(this.o.mapFor?.(profile) ? { map: this.o.mapFor(profile) } : {}),
 		});
 		this.focused.draw();
 	}

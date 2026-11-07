@@ -293,3 +293,8 @@ test("a review line sets the days, 0 turns it off, and junk is a warning", () =>
 	assert.match(warnings.join(), /number of days/);
 	assert.match(newProfileBlock("A", "body", "full"), /# review: 30/);
 });
+
+test("map can name an SVG file, keeping its case, and an unknown name suggests one", () => {
+	assert.equal(resolve("profile: Ship\nmap: Maps/Ship.svg").profile.map, "Maps/Ship.svg");
+	assert.match(failure("profile: Ship\nmap: boat"), /path of an SVG file/);
+});

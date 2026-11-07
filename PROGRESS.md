@@ -17,7 +17,9 @@ A throwaway vault with sample data is at `~/Ark/Development/active/character-inf
 Small tasks, one session each, in dependency order. Each starts at a user-facing entry point.
 
 - [x] **T1. Try it in a real vault.** Done, results above.
-- [ ] **T10. Create a profile from a note.** Entry point: a `character-info` block. Done when a block naming an unknown profile with `template: character` (or `body`, `blank`) creates it on render, a block without `template:` shows one-click buttons to create it from each template, and nothing is created by a typo alone. Creation puts the profile in settings and the data note is made on the first save. Tests cover found, created and prompted, and that rendering twice creates one profile.
+- [ ] **T10a. Profile text format.** Entry point: the text of a `character-info` block. Done when a pure parser and resolver turn the block text into a profile: `profile`, `template`, `add`, `remove`, `rename`, `states`, `default` and `map` keys, with tests for each key, for bad input and for unknown keys.
+- [ ] **T10b. Blocks define and register profiles.** Entry point: a block. Done when a block with more than `profile:` defines that profile and updates the registry in settings, a block with only `profile:` refers to the registry, and an unknown name with no definition shows one-click buttons that register it from each template. Rendering twice makes one profile. Depends on T10a.
+- [ ] **T10c. Retire the settings profile editor.** Entry point: the settings tab. Done when settings hold only global options and a read-only list of known profiles with a remove button, and the old editor code is deleted. Depends on T10b.
 - [ ] **T4. Party view and profiles overview.** Entry point: a block with `profiles: A, B` or `profiles: all`. Done when each profile shows a compact figure with its worst region, a tile opens that profile's full view and goes back, and `all` follows new profiles with no edit. The first created profile also creates `Character Info/Profiles.md` holding an `all` block, and a command opens it.
 - [ ] **T11a. One-click state change.** Entry point: the card. Done when a row of state buttons on the card changes the state and writes history without entering Edit.
 - [ ] **T11b. Quick add and remove.** Entry point: the card. Done when one add row (Doing, To fix, or Link) adds an item on Enter, link mode suggests notes and stores a wikilink, and each item can be removed.
@@ -36,7 +38,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 
 Made to keep work moving. Each is cheap to change.
 
-- **Profiles come from notes.** Settings stay available for editing, but a new profile never requires them.
+- **Profiles are text in the block.** The block text defines a profile and settings only list them. See decision 0009. The older settings editor is retired in T10c.
 - **Inventory** is a global switch in settings, off by default. Items live in the profile's data note as `inventory:` entries with a name, a quantity and an optional region.
 - **Review badges** use a number of days per profile, default 30, 0 to turn off. Any save counts as a review.
 - **Minimum Obsidian version** moves to 1.4.10 when the note suggester is added.
@@ -50,5 +52,5 @@ Made to keep work moving. Each is cheap to change.
 
 ## Next steps
 
-1. Build T10, then T4.
+1. Build T10a, T10b, T10c, then T4.
 2. Work down the list.

@@ -13,6 +13,6 @@ The figure itself follows the owner's original body note: a wide stroke pads the
 ## Consequences
 
 - One drawing fits both maps. A custom SVG map would need its own art or fall back to no armor view.
-- Armor a person types in by hand has no look, so it is listed but not drawn. Adding looks to the add row is possible later.
+- Armor a person types in starts with no look. The item editor lets them pick one.
 - Removing an item removes its drawing. There is no separate equipped flag.
 - Ember glows use a CSS drop-shadow on the art, which Obsidian's Chromium renders.

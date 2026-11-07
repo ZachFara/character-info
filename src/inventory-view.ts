@@ -1,3 +1,4 @@
+import { ARMOR_LOOKS } from "./armor-art.ts";
 import { ITEM_KINDS } from "./data.ts";
 import { KITS, isKitKey, newKitItems } from "./kits.ts";
 import type { Item, ItemKind, Region } from "./types.ts";
@@ -35,7 +36,7 @@ function drawGroup(root: HTMLElement, o: InventoryOptions, kind: ItemKind): void
 	group.createDiv({ cls: "ci-sec-title", text: GROUP_TITLES[kind] });
 	for (const i of indexes) {
 		const item = o.items[i];
-		if (item) drawItem(group, o, item, i);
+		if (item) drawItem(group.createDiv({ cls: "ci-item-holder" }), o, item, i);
 	}
 }
 
@@ -57,8 +58,8 @@ function smallButton(
 	return b;
 }
 
-function drawItem(group: HTMLElement, o: InventoryOptions, item: Item, index: number): void {
-	const row = group.createDiv({ cls: "ci-item" });
+function drawItem(holder: HTMLElement, o: InventoryOptions, item: Item, index: number): void {
+	const row = holder.createDiv({ cls: "ci-item" });
 	const qty = row.createDiv({ cls: "ci-item-qty" });
 	const minus = smallButton(qty, "−", `One fewer ${item.name}`, () => {
 		void o.save(replaceAt(o.items, index, { ...item, qty: item.qty - 1 }));
@@ -74,8 +75,80 @@ function drawItem(group: HTMLElement, o: InventoryOptions, item: Item, index: nu
 	if (item.note) body.createDiv({ cls: "ci-item-note", text: item.note });
 	const region = o.regions.find((r) => r.id === item.region);
 	if (region) row.createSpan({ cls: "ci-item-region", text: region.name });
+	smallButton(row, "✎", `Edit ${item.name}`, () => {
+		holder.empty();
+		drawItemEditor(holder, o, item, index);
+	});
 	smallButton(row, "×", `Remove ${item.name}`, () => {
 		void o.save(replaceAt(o.items, index, null));
+	});
+}
+
+/** A select with the given options, set to `value`. */
+function select(
+	parent: HTMLElement,
+	label: string,
+	options: [string, string][],
+	value: string,
+): HTMLSelectElement {
+	const field = parent.createEl("label", { cls: "ci-edit-field", text: label });
+	const el = field.createEl("select");
+	for (const [v, text] of options) el.createEl("option", { text, attr: { value: v } });
+	el.value = value;
+	return el;
+}
+
+function textField(parent: HTMLElement, label: string, value: string): HTMLInputElement {
+	const field = parent.createEl("label", { cls: "ci-edit-field", text: label });
+	const el = field.createEl("input", { attr: { type: "text" } });
+	el.value = value;
+	return el;
+}
+
+/** The item's row turned into a small form. Save writes the changed item, Cancel puts the row back. */
+function drawItemEditor(holder: HTMLElement, o: InventoryOptions, item: Item, index: number): void {
+	const form = holder.createDiv({ cls: "ci-item-edit" });
+	const name = textField(form, "Name", item.name);
+	const note = textField(form, "Note", item.note);
+	const kind = select(
+		form,
+		"Kind",
+		ITEM_KINDS.map((k) => [k, KIND_LABELS[k]]),
+		item.kind,
+	);
+	const where: [string, string][] = [
+		[CARRIED, "Carried"],
+		...o.regions.map((r): [string, string] => [r.id, r.name]),
+	];
+	const region = select(form, "Worn or held on", where, item.region ?? CARRIED);
+	const looks: [string, string][] = [
+		["", "No drawing"],
+		...ARMOR_LOOKS.map((l): [string, string] => [l.value, l.label]),
+	];
+	const look = select(form, "Drawing on the figure", looks, item.look ?? "");
+	const lookField = look.parentElement;
+	const showLook = (): void => {
+		lookField?.toggleClass("is-hidden", kind.value !== "armor");
+	};
+	kind.addEventListener("change", showLook);
+	showLook();
+
+	const actions = form.createDiv({ cls: "ci-item-edit-actions" });
+	actions.createEl("button", { text: "Cancel" }).addEventListener("click", () => {
+		holder.empty();
+		drawItem(holder, o, item, index);
+	});
+	actions.createEl("button", { cls: "mod-cta", text: "Save" }).addEventListener("click", () => {
+		const chosen = ITEM_KINDS.find((k) => k === kind.value) ?? item.kind;
+		const edited: Item = {
+			...item,
+			name: name.value.trim() || item.name,
+			note: note.value.trim(),
+			kind: chosen,
+			region: region.value || null,
+			look: chosen === "armor" && look.value ? look.value : null,
+		};
+		void o.save(replaceAt(o.items, index, edited));
 	});
 }
 

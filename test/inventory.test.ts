@@ -61,7 +61,7 @@ test("the quantity buttons change the count and cannot go below one", () => {
 
 test("removing an item writes the list without it", () => {
 	const { el, writes } = mountInventory([WATER, SWORD]);
-	must(must(el, ".ci-inv-group.weapon"), ".ci-item > .ci-inv-btn").click();
+	click(all(must(el, ".ci-inv-group.weapon"), ".ci-item > .ci-inv-btn").find((b) => b.textContent === "×"));
 	assert.deepEqual(
 		writes[0]?.map((i) => i.name),
 		["Water"],
@@ -213,4 +213,81 @@ test("selecting a region keeps the Armor view", () => {
 	click(all(el, ".ci-viewtoggle button").find((b) => b.textContent === "Armor"));
 	pick(el, "Torso");
 	assert.ok(el.querySelector(".ci-armor"));
+});
+
+function openEditor(el: HTMLElement, group: string): HTMLElement {
+	click(all(must(el, `.ci-inv-group.${group}`), ".ci-inv-btn").find((b) => b.textContent === "✎"));
+	return must(el, ".ci-item-edit");
+}
+
+function field(form: HTMLElement, label: string): HTMLInputElement | HTMLSelectElement {
+	const found = all(form, ".ci-edit-field").find((f) => f.firstChild?.textContent === label);
+	assert.ok(found, `no field ${label}`);
+	const control = found.querySelector<HTMLInputElement | HTMLSelectElement>("input, select");
+	assert.ok(control);
+	return control;
+}
+
+test("Edit turns an item's row into a form filled with its values, and Cancel puts the row back", () => {
+	const { el, writes } = mountInventory([SWORD]);
+	const form = openEditor(el, "weapon");
+	assert.equal(field(form, "Name").value, "Longsword");
+	assert.equal(field(form, "Note").value, "Steel");
+	assert.equal(field(form, "Kind").value, "weapon");
+	assert.equal(field(form, "Worn or held on").value, "armR");
+	click(all(form, "button").find((b) => b.textContent === "Cancel"));
+	assert.equal(el.querySelector(".ci-item-edit"), null);
+	assert.equal(text(el, ".ci-item-name"), "Longsword");
+	assert.equal(writes.length, 0);
+});
+
+test("Save writes the edited item in its place", () => {
+	const { el, writes } = mountInventory([WATER, SWORD]);
+	const form = openEditor(el, "weapon");
+	field(form, "Name").value = "Bastard sword";
+	field(form, "Worn or held on").value = "armL";
+	click(all(form, "button").find((b) => b.textContent === "Save"));
+	const [written] = writes;
+	assert.ok(written);
+	assert.equal(written[0]?.name, "Water");
+	assert.deepEqual(written[1], { ...SWORD, name: "Bastard sword", region: "armL" });
+});
+
+test("the drawing picker shows only for armor, and a hand-made armor piece can get a drawing", () => {
+	const vest: Item = { name: "Leather vest", kind: "armor", qty: 1, note: "", region: "torso", look: null };
+	const { el, writes } = mountInventory([vest]);
+	const form = openEditor(el, "armor");
+	const look = field(form, "Drawing on the figure");
+	assert.equal(look.parentElement?.classList.contains("is-hidden"), false);
+	assert.ok([...(look as HTMLSelectElement).options].some((o) => o.textContent === "Gravethorn chest armor"));
+	look.value = "military:chest";
+	click(all(form, "button").find((b) => b.textContent === "Save"));
+	const [written] = writes;
+	assert.ok(written);
+	assert.equal(written[0]?.look, "military:chest");
+});
+
+test("changing armor to another kind hides the picker and drops the drawing", () => {
+	const { el, writes } = mountInventory([{ ...SWORD, kind: "armor", look: "gravethorn:helm" }]);
+	const form = openEditor(el, "armor");
+	const kind = field(form, "Kind");
+	kind.value = "gear";
+	kind.dispatchEvent(new window.Event("change"));
+	assert.equal(field(form, "Drawing on the figure").parentElement?.classList.contains("is-hidden"), true);
+	click(all(form, "button").find((b) => b.textContent === "Save"));
+	const [written] = writes;
+	const first = written?.[0];
+	assert.ok(first);
+	assert.equal(first.kind, "gear");
+	assert.equal(first.look, null);
+});
+
+test("an empty name keeps the old one", () => {
+	const { el, writes } = mountInventory([SWORD]);
+	const form = openEditor(el, "weapon");
+	field(form, "Name").value = "  ";
+	click(all(form, "button").find((b) => b.textContent === "Save"));
+	const [written] = writes;
+	assert.ok(written);
+	assert.equal(written[0]?.name, "Longsword");
 });

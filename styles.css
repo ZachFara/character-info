@@ -577,3 +577,30 @@
 	background: var(--text-faint);
 	transform: translateY(-2px);
 }
+
+/* Editing an inventory item in place. */
+.ci-item-edit {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: var(--size-4-2) var(--size-4-3);
+	padding: var(--size-4-3);
+	margin: var(--size-4-1) 0;
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+}
+.ci-edit-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+.ci-edit-field.is-hidden {
+	display: none;
+}
+.ci-item-edit-actions {
+	grid-column: 1 / -1;
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--size-4-2);
+}

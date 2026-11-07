@@ -1,9 +1,23 @@
-import { MarkdownRenderChild, Notice, Plugin, TFile, normalizePath } from "obsidian";
+import {
+	MarkdownRenderChild,
+	Notice,
+	Plugin,
+	TFile,
+	normalizePath,
+	type MarkdownPostProcessorContext,
+} from "obsidian";
 import { applyEdit, normalizeSettings, parseBlock } from "./data.ts";
-import { makeProfile } from "./presets.ts";
-import { CharacterInfoView } from "./render.ts";
+import { isDefinition, resolveDefinition } from "./profile-text.ts";
+import { makeProfile, type TemplateKey } from "./presets.ts";
+import { CharacterInfoView, drawCreatePrompt, drawNotice } from "./render.ts";
 import { CharacterInfoSettingTab } from "./settings.ts";
 import type { Frontmatter, PluginSettings, Profile, RegionPatch } from "./types.ts";
+
+/** What a mounted block exposes so the plugin can refresh it when data changes. */
+interface Mounted {
+	dataPath: string | null;
+	redraw: () => void;
+}
 
 export default class CharacterInfoPlugin extends Plugin {
 	/** Edited in place, never reassigned, because the settings tab holds a reference. */
@@ -21,34 +35,87 @@ export default class CharacterInfoPlugin extends Plugin {
 			}),
 		);
 		this.registerMarkdownCodeBlockProcessor("character-info", (source, el, ctx) => {
-			const opts = parseBlock(source);
-			const profile = this.findProfile(opts.profile ?? this.profileFromNote(ctx.sourcePath));
-			if (!profile) {
-				el.createDiv({
-					cls: "ci-warn",
-					text: "Character Info: no profile found. Add one in the plugin settings.",
-				});
-				return;
-			}
-			const child = new MarkdownRenderChild(el);
-			ctx.addChild(child);
-			const view = new CharacterInfoView({
-				app: this.app,
-				el,
-				profile,
-				sourcePath: ctx.sourcePath,
-				component: child,
-				getFrontmatter: () => this.frontmatterFor(profile),
-				save: (regionId, patch) => this.saveRegion(profile, regionId, patch),
-			});
-			view.draw();
-			child.registerEvent(
-				this.app.metadataCache.on("changed", (file) => {
-					if (file.path === normalizePath(profile.dataPath)) view.draw();
-				}),
-			);
+			this.mountBlock(source, el, ctx);
 		});
 		this.addCommands();
+	}
+
+	/** Draws a block, and again whenever the profile note it shows changes or a profile is created. */
+	private mountBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void {
+		const child = new MarkdownRenderChild(el);
+		ctx.addChild(child);
+		let mounted: Mounted = { dataPath: null, redraw: () => undefined };
+		const mount = (): void => {
+			mounted = this.drawBlock(source, el, ctx, child, mount);
+		};
+		mount();
+		child.registerEvent(
+			this.app.metadataCache.on("changed", (file) => {
+				if (mounted.dataPath !== null && file.path === normalizePath(mounted.dataPath)) mounted.redraw();
+			}),
+		);
+	}
+
+	private drawBlock(
+		source: string,
+		el: HTMLElement,
+		ctx: MarkdownPostProcessorContext,
+		child: MarkdownRenderChild,
+		remount: () => void,
+	): Mounted {
+		const none: Mounted = { dataPath: null, redraw: () => undefined };
+		const block = parseBlock(source);
+		const name = block.profile ?? this.profileFromNote(ctx.sourcePath) ?? undefined;
+		if (name !== undefined) block.profile = name;
+		const profile = this.profileForBlock(block, el, remount);
+		if (!profile) return none;
+		const view = new CharacterInfoView({
+			app: this.app,
+			el,
+			profile,
+			sourcePath: ctx.sourcePath,
+			component: child,
+			getFrontmatter: () => this.frontmatterFor(profile),
+			save: (regionId, patch) => this.saveRegion(profile, regionId, patch),
+		});
+		view.draw();
+		return {
+			dataPath: profile.dataPath,
+			redraw: () => {
+				view.draw();
+			},
+		};
+	}
+
+	/** The profile a block means, or null after drawing why there is none. */
+	private profileForBlock(
+		block: Record<string, string>,
+		el: HTMLElement,
+		remount: () => void,
+	): Profile | null {
+		const name = block.profile;
+		if (name === undefined || name.trim() === "") {
+			const fallback = this.findProfile(null);
+			if (fallback) return fallback;
+			drawNotice(el, "Add a line like “profile: Thorn” to this block, or run the command “New profile”.");
+			return null;
+		}
+		const existing = this.findProfile(name, true);
+		if (isDefinition(block)) {
+			const result = resolveDefinition(block, existing ?? undefined);
+			if (!result.ok) {
+				drawNotice(el, result.error);
+				return null;
+			}
+			this.registerProfile(result.profile);
+			return result.profile;
+		}
+		if (existing) return existing;
+		drawCreatePrompt(el, name, (template) => {
+			this.createProfile(name, template);
+			remount();
+		});
+		return null;
 	}
 
 	private addCommands(): void {
@@ -66,7 +133,7 @@ export default class CharacterInfoPlugin extends Plugin {
 			callback: async () => {
 				const profile = this.findProfile(null);
 				if (!profile) {
-					new Notice("Character Info: add a profile in settings first.");
+					new Notice("Character Info: write a block with a profile line first.");
 					return;
 				}
 				const file = await this.ensureDataFile(profile);
@@ -82,15 +149,28 @@ export default class CharacterInfoPlugin extends Plugin {
 		return typeof value === "string" ? value : null;
 	}
 
-	private findProfile(name: string | null | undefined): Profile | null {
+	/** Looks a profile up by name. With `exact`, a missing name stays missing instead of using the default. */
+	private findProfile(name: string | null | undefined, exact = false): Profile | null {
 		const { profiles, defaultProfile } = this.settings;
-		const wanted = name?.toLowerCase();
-		return (
-			(wanted ? profiles.find((p) => p.name.toLowerCase() === wanted) : undefined) ??
-			profiles.find((p) => p.id === defaultProfile) ??
-			profiles[0] ??
-			null
-		);
+		const wanted = name?.trim().toLowerCase();
+		const named = wanted ? profiles.find((p) => p.name.toLowerCase() === wanted) : undefined;
+		if (named || exact) return named ?? null;
+		return profiles.find((p) => p.id === defaultProfile) ?? profiles[0] ?? null;
+	}
+
+	/** Adds or updates a profile in the registry, saving only when something changed. */
+	private registerProfile(profile: Profile): void {
+		const list = this.settings.profiles;
+		const at = list.findIndex((p) => p.id === profile.id);
+		if (at >= 0 && JSON.stringify(list[at]) === JSON.stringify(profile)) return;
+		if (at >= 0) list[at] = profile;
+		else list.push(profile);
+		if (!this.settings.defaultProfile) this.settings.defaultProfile = profile.id;
+		void this.saveSettings();
+	}
+
+	private createProfile(name: string, template: TemplateKey): void {
+		this.registerProfile(makeProfile(template, name, this.settings.profiles));
 	}
 
 	private frontmatterFor(profile: Profile): Frontmatter {
@@ -124,11 +204,6 @@ export default class CharacterInfoPlugin extends Plugin {
 	private async loadSettings(): Promise<void> {
 		const loaded: unknown = await this.loadData();
 		Object.assign(this.settings, normalizeSettings(loaded));
-		if (!this.settings.profiles.length) {
-			const first = makeProfile("body", "Me", []);
-			this.settings.profiles.push(first);
-			this.settings.defaultProfile = first.id;
-		}
 	}
 
 	private async saveSettings(): Promise<void> {

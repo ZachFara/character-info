@@ -9,7 +9,13 @@ import { createRequire } from "node:module";
 import type { Component } from "obsidian";
 import { installDomHelpers } from "./obsidian-stub.ts";
 import { STATE_SETS, TEMPLATES } from "../src/presets.ts";
-import type { CharacterInfoView as ViewClass, ViewOptions } from "../src/render.ts";
+import type {
+	CharacterInfoView as ViewClass,
+	ViewOptions,
+	drawCreatePrompt as drawCreatePromptFn,
+	drawNotice as drawNoticeFn,
+} from "../src/render.ts";
+import type { TemplateKey } from "../src/presets.ts";
 import type { Frontmatter, Profile, RegionPatch } from "../src/types.ts";
 
 // Bundle render.ts with `obsidian` pointed at the stub, then import it under jsdom.
@@ -31,7 +37,11 @@ Object.assign(globalThis, {
 	DOMParser: dom.window.DOMParser,
 });
 installDomHelpers(dom.window as unknown as Window & typeof globalThis);
-const mod = createRequire(import.meta.url)(out) as { CharacterInfoView: typeof ViewClass };
+const mod = createRequire(import.meta.url)(out) as {
+	CharacterInfoView: typeof ViewClass;
+	drawCreatePrompt: typeof drawCreatePromptFn;
+	drawNotice: typeof drawNoticeFn;
+};
 
 function profile(key: keyof typeof TEMPLATES): Profile {
 	const t = TEMPLATES[key];
@@ -39,6 +49,7 @@ function profile(key: keyof typeof TEMPLATES): Profile {
 	return {
 		id: "p",
 		name: "Test",
+		template: key,
 		map: t.map,
 		states: set.states,
 		defaultState: set.defaultState,
@@ -171,4 +182,23 @@ test("editing saves the chosen state and text, and history shows", async () => {
 	assert.equal(el.querySelector(".ci-form"), null);
 	assert.match(text(el, ".ci-sec.history"), /History \(1\)/);
 	assert.match(text(el, ".ci-sec.history"), /2026-11-01: Untracked to Maintaining/);
+});
+
+test("a missing profile offers one button per template and reports the choice", () => {
+	const el = document.body.appendChild(document.createElement("div"));
+	const chosen: TemplateKey[] = [];
+	mod.drawCreatePrompt(el, "Thorn", (t) => chosen.push(t));
+	assert.match(text(el, ".ci-create-title"), /Thorn/);
+	const buttons = all(el, ".ci-create-row button");
+	assert.equal(buttons.length, 3);
+	click(buttons.find((b) => b.textContent.includes("Tabletop")));
+	assert.deepEqual(chosen, ["character"]);
+});
+
+test("a notice replaces the block content with a message", () => {
+	const el = document.body.appendChild(document.createElement("div"));
+	el.textContent = "old";
+	mod.drawNotice(el, "Unknown template");
+	assert.equal(text(el, ".ci-notice"), "Unknown template");
+	assert.equal(el.textContent, "Unknown template");
 });

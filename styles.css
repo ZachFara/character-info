@@ -285,3 +285,27 @@
 .ci-fig svg {
 	max-height: 440px;
 }
+
+/* Shown when a block cannot be drawn, or names a profile that does not exist yet. */
+.ci-notice,
+.ci-create {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-l);
+	background: var(--background-secondary);
+	padding: var(--size-4-4);
+	color: var(--text-muted);
+}
+.ci-create-title {
+	color: var(--text-normal);
+	font-weight: var(--font-semibold);
+}
+.ci-create-hint {
+	margin-top: var(--size-4-2);
+	font-size: var(--font-ui-small);
+}
+.ci-create-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-2);
+}

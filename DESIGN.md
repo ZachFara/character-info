@@ -12,7 +12,7 @@ Character Info is an Obsidian plugin that shows anything made of parts as a clic
 
 ## Concepts
 
-- **Profile.** A named set of a map, regions, states and a data note path. Stored in the plugin's `data.json`. Several can exist. One is the default.
+- **Profile.** A named set of a map, regions, states and a data note path. Defined by the text of a `character-info` block (decision 0009) and cached in a registry in the plugin's `data.json`. Several can exist.
 - **Map.** A built-in SVG figure: `body`, `humanoid`, or `none`. A map is a set of shapes keyed by region id.
 - **Region.** One part. Its id picks the map shape that draws it. A region with no shape shows only as a chip.
 - **Neutral default.** A region in the profile's default state is drawn in the neutral body colour, so colour on the figure always means something needs attention. Its chip still shows the state colour. The selected region gets an outline in the text colour.
@@ -23,7 +23,7 @@ Character Info is an Obsidian plugin that shows anything made of parts as a clic
 
 Everything the plugin adds is reached through one of these.
 
-1. A `character-info` code block. `profile: Name` picks the profile. Without it the note's `character-info-profile` frontmatter is used, then the default profile.
+1. A `character-info` code block. Its text defines the profile: `profile`, `template`, `add`, `remove`, `rename`, `states`, `default` and `map`. A block with only `profile` refers to a defined one, and an unknown name offers buttons to create it.
 2. The settings tab: default profile, add a profile from a template, edit name, data note path, map, states and regions, duplicate, delete.
 3. Command "Insert block", which writes a code block for the default profile.
 4. Command "Open the default profile data note".

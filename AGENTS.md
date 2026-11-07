@@ -8,20 +8,21 @@ Character Info is an Obsidian plugin: a clickable character screen over a map. A
 
 ## Architecture
 
-Seven modules in `src/`. The arrows are the only allowed imports, and `make check` enforces them.
+Eight modules in `src/`. The arrows are the only allowed imports, and `make check` enforces them.
 
 ```
 types      leaf, imports nothing
 data       pure logic, imports types
 presets    built-in maps, state sets, templates; imports types, data
+profile-text  block text to a profile; imports types, data, presets
 render     figure, card, roster, editor; imports obsidian, types, data, presets
 settings   the settings tab; imports obsidian, types, data, presets
 main       the plugin; the only module that wires the others together
 ```
 
-- `data` and `presets` never import `obsidian`, so they test without it.
+- `data`, `presets` and `profile-text` never import `obsidian`, so they test without it.
 - `render` and `settings` never import each other or `main`. `main` passes them callbacks.
-- The entry points a user can reach: the `character-info` code block, the settings tab, and two commands. Nothing is added that none of these reach.
+- The entry points a user can reach: the `character-info` code block, whose text defines a profile (decision 0009), the settings tab, and the commands. Nothing is added that none of these reach.
 
 ## Directory layout
 

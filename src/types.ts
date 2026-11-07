@@ -31,8 +31,8 @@ export interface Profile {
 export interface PluginSettings {
 	profiles: Profile[];
 	defaultProfile: string;
-	/** Optional features, each off until switched on in settings. */
-	features: { inventory: boolean };
+	/** Optional features, switched on or off in settings. The inventory starts off, reviews start on. */
+	features: { inventory: boolean; reviews: boolean };
 }
 
 export type ItemKind = "weapon" | "armor" | "gear";

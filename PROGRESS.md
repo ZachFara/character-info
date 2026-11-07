@@ -29,10 +29,11 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T6a and T6b. Inventory switch and items.** Done: a settings toggle, off by default, shows an inventory panel with items grouped as weapons, armor and gear. Items have a name, quantity, note and optional region, with plus, minus and remove, and are stored in the data note. Checked in real Obsidian.
 - [x] **T6c. Worn and held.** Done: an item tied to a region shows on that region's card under Worn and held when the inventory is on. Checked in real Obsidian.
 - [x] **T6d. Starter kits.** Done: a kit row adds a modern soldier loadout, a medieval knight, or the original Gravethorn dark fantasy warplate, placed on the regions the profile has and never duplicating a piece. The naming rule is decision 0011. Checked in real Obsidian.
+- [x] **T6e. Armor on the figure.** Done: kit armor carries a look, drawn as hand-made SVG over a neutral body in an Armor view. A Body / Armor switch appears only when drawable armor is worn. Two sets: modern military and Gravethorn. The figure now uses the padded, outlined style of the owner's original body note. Checked in real Obsidian. See decision 0012.
 - [ ] **T7. Custom SVG maps.** Entry point: settings. Done when a vault SVG can be chosen, shapes with an id become regions, the SVG is sanitized, and a block can use it.
 - [ ] **T9. Real-Obsidian check script.** Done when a committed script starts an isolated Obsidian with the test vault and returns screenshots and results, and a decision record covers it.
 - [ ] **T8. Release prep.** Done when a tag builds `main.js`, `manifest.json` and `styles.css` in CI, the README has screenshots, and the community plugin checklist is satisfied.
-- [ ] **T13. List indent in the card.** Done when lists align with the section label in Obsidian.
+- [x] **T13. List indent in the card.** Done: card lists use a small dot aligned with the section title.
 
 ## Decisions made on the owner's go-ahead
 

@@ -1,6 +1,8 @@
 import { MarkdownRenderer, type App, type Component } from "obsidian";
 import { TEMPLATES, getMap, type MapPreset, type TemplateKey } from "./presets.ts";
+import { armorMarkup } from "./armor-art.ts";
 import {
+	armorLooks,
 	describeItem,
 	isUnknownStatus,
 	itemsOnRegion,
@@ -11,7 +13,14 @@ import {
 	tally,
 	toList,
 } from "./data.ts";
-import { drawAddRegion, drawQuickAdd, drawStateButtons, type ListField } from "./card-actions.ts";
+import {
+	drawAddRegion,
+	drawQuickAdd,
+	drawStateButtons,
+	drawViewToggle,
+	type FigureView,
+	type ListField,
+} from "./card-actions.ts";
 import { drawInventory } from "./inventory-view.ts";
 import type { Frontmatter, Item, Profile, Region, RegionData, RegionPatch, State } from "./types.ts";
 
@@ -53,13 +62,15 @@ function svgGroup(className: string, markup: string[]): SVGGElement {
  * stay neutral so colour lands only on regions that need attention. `decorate` lets the caller
  * add behaviour to each region.
  */
-function figureSvg(
-	profile: Profile,
-	map: MapPreset,
-	fm: Frontmatter,
-	selected: string | null,
-	decorate?: (g: SVGGElement, region: Region) => void,
-): SVGSVGElement {
+interface FigureOptions {
+	selected: string | null;
+	/** Adds behaviour to each region. */
+	decorate?: (g: SVGGElement, region: Region) => void;
+	/** Armor drawings to lay over the figure. When given, every region is drawn neutral. */
+	armor?: string[];
+}
+
+function figureSvg(profile: Profile, map: MapPreset, fm: Frontmatter, o: FigureOptions): SVGSVGElement {
 	const svg = activeDocument.createElementNS(SVG_NS, "svg");
 	svg.setAttribute("viewBox", map.viewBox);
 	svg.setAttribute("role", "img");
@@ -73,14 +84,16 @@ function figureSvg(
 	);
 	for (const r of drawn) {
 		const state = resolveState(profile, readRegion(fm, r.id).status);
-		const neutral = state.id === profile.defaultState;
-		const cls = "ci-region" + (neutral ? " is-default" : "") + (r.id === selected ? " is-sel" : "");
+		const neutral = o.armor !== undefined || state.id === profile.defaultState;
+		const cls = "ci-region" + (neutral ? " is-default" : "") + (r.id === o.selected ? " is-sel" : "");
 		const g = svgGroup(cls, [map.shapes[r.id] ?? ""]);
 		g.dataset.region = r.id;
 		if (!neutral) g.style.setProperty("--ci-c", state.color);
-		decorate?.(g, r);
+		o.decorate?.(g, r);
 		svg.appendChild(g);
 	}
+	// The armor layer lets clicks through to the regions underneath.
+	if (o.armor) svg.appendChild(svgGroup("ci-armor", o.armor));
 	return svg;
 }
 
@@ -89,7 +102,7 @@ export function drawMiniFigure(parent: HTMLElement, profile: Profile, fm: Frontm
 	const map = getMap(profile.map);
 	if (!profile.regions.some((r) => map.shapes[r.id] !== undefined)) return;
 	const fig = parent.createDiv({ cls: "ci-mini" });
-	fig.appendChild(figureSvg(profile, map, fm, null));
+	fig.appendChild(figureSvg(profile, map, fm, { selected: null }));
 }
 
 /** A warning or hint in the same card style, used when a block cannot be drawn. */
@@ -125,6 +138,8 @@ export function drawCreatePrompt(
 export class CharacterInfoView {
 	private selected: string | null = null;
 	private editing = false;
+	/** Whether the figure shows the body's states or the armor worn on it. */
+	private view: FigureView = "body";
 	private readonly map: MapPreset;
 
 	constructor(private readonly o: ViewOptions) {
@@ -183,21 +198,42 @@ export class CharacterInfoView {
 		}
 	}
 
+	/** Armor drawings for the inventory's worn pieces. Empty when the inventory is off or nothing has a drawing. */
+	private armorOnShow(fm: Frontmatter): string[] {
+		return this.o.saveInventory ? armorMarkup(armorLooks(readInventory(fm))) : [];
+	}
+
 	private drawFigure(grid: HTMLElement, fm: Frontmatter): void {
 		const fig = grid.createEl("figure", { cls: "ci-fig" });
+		const armor = this.armorOnShow(fm);
+		if (!armor.length) this.view = "body";
+		else {
+			drawViewToggle(fig, this.view, (view) => {
+				this.view = view;
+				this.draw();
+			});
+		}
 		const caption = fig.createEl("figcaption", { text: HINT });
-		const svg = figureSvg(this.o.profile, this.map, fm, this.selected, (g, r) => {
-			g.addEventListener("click", () => {
-				this.select(r.id);
-			});
-			g.addEventListener("mouseenter", () => {
-				caption.textContent = r.name;
-			});
-			g.addEventListener("mouseleave", () => {
-				caption.textContent = HINT;
-			});
+		const svg = figureSvg(this.o.profile, this.map, fm, {
+			selected: this.selected,
+			...(this.view === "armor" ? { armor } : {}),
+			decorate: (g, r) => {
+				this.decorateRegion(g, r, caption);
+			},
 		});
 		fig.insertBefore(svg, caption);
+	}
+
+	private decorateRegion(g: SVGGElement, r: Region, caption: HTMLElement): void {
+		g.addEventListener("click", () => {
+			this.select(r.id);
+		});
+		g.addEventListener("mouseenter", () => {
+			caption.textContent = r.name;
+		});
+		g.addEventListener("mouseleave", () => {
+			caption.textContent = HINT;
+		});
 	}
 
 	private drawRoster(side: HTMLElement, fm: Frontmatter): void {

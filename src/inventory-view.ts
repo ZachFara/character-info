@@ -100,6 +100,7 @@ function drawAddRow(root: HTMLElement, o: InventoryOptions): void {
 			qty: 1,
 			note: note.value.trim(),
 			region: region.value || null,
+			look: null,
 		};
 		void o.save([...o.items, item]);
 	};

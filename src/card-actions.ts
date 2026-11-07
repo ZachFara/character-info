@@ -110,3 +110,27 @@ export function drawAddRegion(roster: HTMLElement, onAdd: (name: string) => void
 		});
 	});
 }
+
+export type FigureView = "body" | "armor";
+
+/** Two buttons over the figure: the body's states, or the armor worn on it. */
+export function drawViewToggle(
+	parent: HTMLElement,
+	current: FigureView,
+	onPick: (view: FigureView) => void,
+): void {
+	const row = parent.createDiv({
+		cls: "ci-viewtoggle",
+		attr: { role: "group", "aria-label": "Figure view" },
+	});
+	for (const [view, label] of [
+		["body", "Body"],
+		["armor", "Armor"],
+	] as const) {
+		const b = row.createEl("button", { cls: view === current ? "is-on" : "", text: label });
+		b.setAttribute("aria-pressed", String(view === current));
+		b.addEventListener("click", () => {
+			if (view !== current) onPick(view);
+		});
+	}
+}

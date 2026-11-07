@@ -4,6 +4,7 @@
 //   data      pure logic: imports types only
 //   presets   built-in data: imports types and data only
 //   kits      starter kits and where they go: imports types only
+//   armor-art  drawings of armor pieces: imports nothing
 //   profile-text  block text to profile: imports types, data, presets only
 //   render    the figure and card: imports obsidian, data, presets, types
 //   settings  the settings tab: imports obsidian, data, presets, types
@@ -12,7 +13,7 @@
 //   inventory-view  the inventory panel: imports data, types; only render imports it
 //   card-actions  controls drawn on the card: imports types; only render imports it
 //   main      the only module that wires the others together
-const PURE = "^src/(types|data|presets|profile-text|kits)\\.ts$";
+const PURE = "^src/(types|data|presets|profile-text|kits|armor-art)\\.ts$";
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {

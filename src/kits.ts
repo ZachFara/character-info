@@ -14,6 +14,8 @@ interface KitItem {
 	note: string;
 	slot: Slot;
 	qty?: number;
+	/** The drawing that shows this piece on the figure, from armor-art. */
+	look?: string;
 }
 
 export interface Kit {
@@ -40,13 +42,38 @@ export const KITS = {
 				name: "Combat helmet",
 				kind: "armor",
 				slot: "head",
+				look: "military:helm",
 				note: "Ballistic shell with a night-vision mount",
 			},
 			{
 				name: "Plate carrier",
 				kind: "armor",
 				slot: "torso",
-				note: "Front, back and side armor plates with load-bearing webbing",
+				look: "military:chest",
+				note: "Front, back and side plates with magazine pouches",
+			},
+			{
+				name: "Right tactical glove",
+				kind: "armor",
+				slot: "armR",
+				look: "military:gauntletR",
+				note: "Hard knuckle guard",
+			},
+			{
+				name: "Left tactical glove",
+				kind: "armor",
+				slot: "armL",
+				look: "military:gauntletL",
+				note: "Hard knuckle guard",
+			},
+			{ name: "Right knee pad", kind: "armor", slot: "legR", look: "military:greaveR", note: "Hard shell" },
+			{ name: "Left knee pad", kind: "armor", slot: "legL", look: "military:greaveL", note: "Hard shell" },
+			{
+				name: "Combat boots",
+				kind: "armor",
+				slot: "feet",
+				look: "military:boots",
+				note: "Reinforced soles and ankle support",
 			},
 			{
 				name: "Assault rifle",
@@ -56,8 +83,6 @@ export const KITS = {
 			},
 			{ name: "Sidearm", kind: "weapon", slot: "carried", note: "9 mm pistol, holstered" },
 			{ name: "Combat knife", kind: "weapon", slot: "carried", note: "Fixed blade, sheathed on the vest" },
-			{ name: "Combat boots", kind: "armor", slot: "feet", note: "Reinforced soles and ankle support" },
-			{ name: "Knee and elbow pads", kind: "armor", slot: "carried", note: "Hard shell" },
 			{ name: "Spare magazines", kind: "gear", slot: "carried", qty: 6, note: "30 rounds each" },
 			{
 				name: "First aid kit",
@@ -67,30 +92,6 @@ export const KITS = {
 			},
 			{ name: "Radio", kind: "gear", slot: "carried", note: "Short range, with an earpiece" },
 			{ name: "Water", kind: "gear", slot: "carried", qty: 3, note: "1 L bottles" },
-			{ name: "Field rations", kind: "gear", slot: "carried", qty: 2, note: "One day each" },
-		],
-	},
-	knight: {
-		label: "Medieval knight",
-		items: [
-			{ name: "Great helm", kind: "armor", slot: "head", note: "Steel, narrow eye slit, plume socket" },
-			{ name: "Plate cuirass", kind: "armor", slot: "torso", note: "Riveted breastplate and backplate" },
-			{ name: "Mail hauberk", kind: "armor", slot: "torso", note: "Riveted mail worn under the plate" },
-			{ name: "Left gauntlet", kind: "armor", slot: "armL", note: "Articulated steel" },
-			{ name: "Right gauntlet", kind: "armor", slot: "armR", note: "Articulated steel" },
-			{ name: "Left greave", kind: "armor", slot: "legL", note: "Plate shin guard" },
-			{ name: "Right greave", kind: "armor", slot: "legR", note: "Plate shin guard" },
-			{ name: "Sabatons", kind: "armor", slot: "feet", note: "Articulated steel boots" },
-			{ name: "Longsword", kind: "weapon", slot: "armR", note: "Double-edged, hand-and-a-half grip" },
-			{
-				name: "Kite shield",
-				kind: "armor",
-				slot: "armL",
-				note: "Wood faced with leather, painted with heraldry",
-			},
-			{ name: "Rondel dagger", kind: "weapon", slot: "carried", note: "For close work" },
-			{ name: "Heraldic surcoat", kind: "gear", slot: "carried", note: "Worn over the armor" },
-			{ name: "Waterskin", kind: "gear", slot: "carried", note: "Leather" },
 		],
 	},
 	gravethorn: {
@@ -100,45 +101,58 @@ export const KITS = {
 				name: "Gravethorn helm",
 				kind: "armor",
 				slot: "head",
+				look: "gravethorn:helm",
 				note: "Black steel with swept horns and a visor slit that glows ember-red",
 			},
 			{
 				name: "Gravethorn cuirass",
 				kind: "armor",
 				slot: "torso",
+				look: "gravethorn:chest",
 				note: "Ribbed black plates with jagged edges and ember light in the seams",
 			},
 			{
 				name: "Thorned pauldrons",
 				kind: "armor",
 				slot: "torso",
+				look: "gravethorn:pauldrons",
 				note: "Spiked shoulder plates that curve like thorns",
-			},
-			{
-				name: "Gravethorn left gauntlet",
-				kind: "armor",
-				slot: "armL",
-				note: "Black steel with talon-like finger plates",
 			},
 			{
 				name: "Gravethorn right gauntlet",
 				kind: "armor",
 				slot: "armR",
+				look: "gravethorn:gauntletR",
 				note: "Black steel with talon-like finger plates",
 			},
 			{
-				name: "Gravethorn left greave",
+				name: "Gravethorn left gauntlet",
 				kind: "armor",
-				slot: "legL",
-				note: "Black steel with a spiked knee guard",
+				slot: "armL",
+				look: "gravethorn:gauntletL",
+				note: "Black steel with talon-like finger plates",
 			},
 			{
 				name: "Gravethorn right greave",
 				kind: "armor",
 				slot: "legR",
+				look: "gravethorn:greaveR",
 				note: "Black steel with a spiked knee guard",
 			},
-			{ name: "Gravethorn boots", kind: "armor", slot: "feet", note: "Plated boots with clawed toes" },
+			{
+				name: "Gravethorn left greave",
+				kind: "armor",
+				slot: "legL",
+				look: "gravethorn:greaveL",
+				note: "Black steel with a spiked knee guard",
+			},
+			{
+				name: "Gravethorn boots",
+				kind: "armor",
+				slot: "feet",
+				look: "gravethorn:boots",
+				note: "Plated boots with clawed toes",
+			},
 			{
 				name: "Gravethorn greatsword",
 				kind: "weapon",
@@ -175,6 +189,7 @@ export function kitItems(kit: Kit, regions: Region[]): Item[] {
 		qty: i.qty ?? 1,
 		note: i.note,
 		region: regionFor(i.slot, regions),
+		look: i.look ?? null,
 	}));
 }
 

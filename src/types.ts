@@ -42,6 +42,8 @@ export interface Item {
 	qty: number;
 	note: string;
 	region: string | null;
+	/** Which drawing shows this piece on the figure, such as `gravethorn:helm`. Null draws nothing. */
+	look: string | null;
 }
 
 export interface HistoryEntry {

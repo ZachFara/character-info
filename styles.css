@@ -79,39 +79,47 @@
 	color: var(--text-faint);
 	min-height: 1.2em;
 }
+/*
+ * The figure is drawn in two layers, after the look of the owner's original body note. A wide
+ * stroke pads the silhouette into one soft body, then each part sits on it as a thin outline with
+ * a faint fill. Parts in the default state stay grey; colour marks parts that need attention.
+ */
 .ci-silhouette {
-	fill: var(--background-modifier-border-hover);
-	stroke: none;
+	fill: var(--background-modifier-border);
+	stroke: var(--background-modifier-border);
+	stroke-width: 7;
+	stroke-linejoin: round;
+	pointer-events: none;
 }
 .ci-region {
+	color: var(--ci-c);
 	fill: var(--ci-c);
 	stroke: var(--ci-c);
-	fill-opacity: 0.55;
-	stroke-width: 1.5;
+	fill-opacity: 0.28;
+	stroke-width: 1.4;
 	cursor: pointer;
-	transition: fill-opacity 0.12s;
+	transition:
+		fill-opacity 0.12s ease,
+		stroke-width 0.12s ease;
 }
 .ci-region.is-default {
-	fill: var(--background-modifier-border-hover);
-	fill-opacity: 0;
-	/* A faint seam in the card colour keeps neighbouring parts readable on the neutral body. */
-	stroke: var(--background-secondary);
-	stroke-width: 1.2;
-	stroke-opacity: 0.7;
+	--ci-c: var(--text-faint);
+	fill-opacity: 0.12;
+	stroke-opacity: 0.55;
 }
 .ci-region:hover {
-	fill-opacity: 0.8;
-}
-.ci-region.is-default:hover {
-	fill-opacity: 0.6;
+	fill-opacity: 0.5;
+	stroke-width: 2.2;
 }
 .ci-region.is-sel {
-	fill-opacity: 0.9;
-	stroke: var(--text-normal);
-	stroke-width: 2.5;
+	fill-opacity: 0.75;
+	stroke-width: 2.4;
+	filter: drop-shadow(0 0 4px currentColor);
 }
 .ci-region.is-default.is-sel {
-	fill-opacity: 0.35;
+	--ci-c: var(--text-normal);
+	fill-opacity: 0.25;
+	stroke-opacity: 1;
 }
 
 .ci-card {
@@ -524,4 +532,48 @@
 }
 .ci-add-region {
 	min-width: 140px;
+}
+
+/* Body and armor views of the figure. */
+.ci-viewtoggle {
+	display: inline-flex;
+	margin: 0 auto var(--size-4-3);
+	padding: 2px;
+	border-radius: 999px;
+	background: var(--background-modifier-hover);
+}
+.ci-viewtoggle button {
+	height: auto;
+	padding: 3px var(--size-4-3);
+	border-radius: 999px;
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+.ci-viewtoggle button.is-on {
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+.ci-armor {
+	pointer-events: none;
+}
+.ci-armor .ci-ember {
+	filter: drop-shadow(0 0 1.2px #ff7a3d) drop-shadow(0 0 3px rgba(255, 90, 31, 0.55));
+}
+
+/* Card lists: a small dot instead of the browser bullet, aligned with the section title. */
+.ci-sec ul {
+	list-style: none;
+	padding-left: 0;
+}
+.ci-sec li::before {
+	content: "";
+	flex: none;
+	width: 5px;
+	height: 5px;
+	margin-right: var(--size-4-1);
+	border-radius: 50%;
+	background: var(--text-faint);
+	transform: translateY(-2px);
 }

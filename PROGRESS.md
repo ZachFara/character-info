@@ -28,7 +28,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [ ] **T5. Hit roll and damage.** Entry point: the figure. Done when a roll button picks a region by weight and selects it, Worsen and Heal buttons step the state, and both are tested with a seeded roll.
 - [x] **T6a and T6b. Inventory switch and items.** Done: a settings toggle, off by default, shows an inventory panel with items grouped as weapons, armor and gear. Items have a name, quantity, note and optional region, with plus, minus and remove, and are stored in the data note. Checked in real Obsidian.
 - [x] **T6c. Worn and held.** Done: an item tied to a region shows on that region's card under Worn and held when the inventory is on. Checked in real Obsidian.
-- [ ] **T6d. Starter kits.** Done when a kit dropdown adds a ready-made set of weapons and armor, placed on the regions the profile has. Kits: a modern soldier loadout, a medieval knight, and an original dark fantasy warplate in the same spirit as well-known black demonic plate, with its own name and design and none of the protected names. Needs a decision record on the naming rule.
+- [x] **T6d. Starter kits.** Done: a kit row adds a modern soldier loadout, a medieval knight, or the original Gravethorn dark fantasy warplate, placed on the regions the profile has and never duplicating a piece. The naming rule is decision 0011. Checked in real Obsidian.
 - [ ] **T7. Custom SVG maps.** Entry point: settings. Done when a vault SVG can be chosen, shapes with an id become regions, the SVG is sanitized, and a block can use it.
 - [ ] **T9. Real-Obsidian check script.** Done when a committed script starts an isolated Obsidian with the test vault and returns screenshots and results, and a decision record covers it.
 - [ ] **T8. Release prep.** Done when a tag builds `main.js`, `manifest.json` and `styles.css` in CI, the README has screenshots, and the community plugin checklist is satisfied.
@@ -52,5 +52,5 @@ Made to keep work moving. Each is cheap to change.
 
 ## Next steps
 
-1. Build T6d, then T11a.
+1. Build T11a to T11c, then T3, T5, T7, T9, T8 and T13.
 2. Work down the list.

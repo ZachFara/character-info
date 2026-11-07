@@ -309,3 +309,29 @@ test("a region with nothing on it has no worn section, and the inventory being o
 	pick(off, "Right arm");
 	assert.equal(off.querySelector(".ci-sec.worn"), null);
 });
+
+test("the kit row offers every kit and adds the chosen one placed on the profile's regions", () => {
+	const { el, writes } = mountInventory([WATER]);
+	const pickKit = must(el, ".ci-kit-row select") as HTMLSelectElement;
+	assert.deepEqual(
+		[...pickKit.options].map((o) => o.value),
+		["soldier", "knight", "gravethorn"],
+	);
+	pickKit.value = "knight";
+	must(el, ".ci-kit-row button").click();
+	const [written] = writes;
+	assert.ok(written);
+	assert.equal(written[0]?.name, "Water");
+	assert.equal(written.find((i) => i.name === "Longsword")?.region, "armR");
+	assert.equal(written.find((i) => i.name === "Left greave")?.region, "legL");
+});
+
+test("adding a kit skips pieces that are already in the inventory", () => {
+	const kit: Item[] = [{ name: "Longsword", kind: "weapon", qty: 1, note: "", region: "armR" }];
+	const { el, writes } = mountInventory(kit);
+	const pickKit = must(el, ".ci-kit-row select") as HTMLSelectElement;
+	pickKit.value = "knight";
+	must(el, ".ci-kit-row button").click();
+	assert.equal(writes.length, 1);
+	assert.equal(writes[0]?.length, 13);
+});

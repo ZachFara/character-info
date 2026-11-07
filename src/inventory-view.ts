@@ -1,4 +1,5 @@
 import { ITEM_KINDS } from "./data.ts";
+import { KITS, isKitKey, newKitItems } from "./kits.ts";
 import type { Item, ItemKind, Region } from "./types.ts";
 
 export interface InventoryOptions {
@@ -24,6 +25,7 @@ export function drawInventory(parent: HTMLElement, o: InventoryOptions): void {
 	if (!o.items.length) root.createDiv({ cls: "ci-empty", text: "Nothing carried yet." });
 	for (const kind of ITEM_KINDS) drawGroup(root, o, kind);
 	drawAddRow(root, o);
+	drawKitRow(root, o);
 }
 
 function drawGroup(root: HTMLElement, o: InventoryOptions, kind: ItemKind): void {
@@ -105,4 +107,22 @@ function drawAddRow(root: HTMLElement, o: InventoryOptions): void {
 		if (e.key === "Enter") add();
 	});
 	row.createEl("button", { cls: "mod-cta", text: "Add" }).addEventListener("click", add);
+}
+
+/** A row to add a whole starter kit. Items already in the inventory are not added again. */
+function drawKitRow(root: HTMLElement, o: InventoryOptions): void {
+	const row = root.createDiv({ cls: "ci-kit-row" });
+	row.createSpan({ cls: "ci-kit-label", text: "Starter kit" });
+	const pick = row.createEl("select", { attr: { "aria-label": "Starter kit" } });
+	for (const [key, kit] of Object.entries(KITS)) {
+		pick.createEl("option", {
+			text: `${kit.label}, ${String(kit.items.length)} items`,
+			attr: { value: key },
+		});
+	}
+	row.createEl("button", { text: "Add kit" }).addEventListener("click", () => {
+		if (!isKitKey(pick.value)) return;
+		const added = newKitItems(KITS[pick.value], o.regions, o.items);
+		if (added.length) void o.save([...o.items, ...added]);
+	});
 }

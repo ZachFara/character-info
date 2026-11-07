@@ -1,5 +1,5 @@
 {
-	"entry": ["scripts/*.mjs", "test/**/*.test.ts"],
+	"entry": ["scripts/*.mjs", "test/**/*.test.ts", "test/browser-app.ts"],
 	"project": ["src/**/*.ts", "test/**/*.ts", "scripts/*.mjs", "*.mjs"],
 	"ignoreBinaries": ["make"],
 	"ignoreDependencies": ["prettier"]

@@ -235,3 +235,62 @@ test("Escape puts the plus chip back and an empty box adds nothing", () => {
 	assert.ok(el.querySelector(".ci-chip-add"));
 	assert.equal(el.querySelector(".ci-add-region"), null);
 });
+
+function mountOn(day: string, fm: Frontmatter, saved: [string, RegionPatch][] = []): HTMLElement {
+	const el = document.body.appendChild(document.createElement("div"));
+	new mod.CharacterInfoView({
+		app: {} as ViewOptions["app"],
+		el,
+		profile: { ...profile("character"), reviewAfterDays: 30 },
+		sourcePath: "x.md",
+		component: {} as Component,
+		getFrontmatter: () => fm,
+		save: (id, patch) => {
+			saved.push([id, patch]);
+			return Promise.resolve();
+		},
+		saveInventory: null,
+		today: () => day,
+	}).draw();
+	return el;
+}
+
+const STALE: Frontmatter = {
+	regions: {
+		armL: { status: "wounded", reviewed: "2026-09-01" },
+		legR: { status: "bruised", reviewed: "2026-11-01" },
+	},
+};
+
+test("a region not touched for too long shows Review due with how long, and its chip is marked", () => {
+	const el = mountOn("2026-11-06", STALE);
+	pick(el, "Left arm");
+	assert.equal(text(el, ".ci-review-text"), "Review due. Not reviewed in 66 days.");
+	assert.deepEqual(
+		all(el, ".ci-chip.is-due").map((c) => c.textContent),
+		["Left arm"],
+	);
+	assert.match(text(el, ".ci-due-count"), /1 to review/);
+});
+
+test("Mark reviewed saves a review-only edit", () => {
+	const saved: [string, RegionPatch][] = [];
+	const el = mountOn("2026-11-06", STALE, saved);
+	pick(el, "Left arm");
+	click(all(el, ".ci-review button").find((b) => b.textContent === "Mark reviewed"));
+	assert.deepEqual(saved, [["armL", { reviewed: true }]]);
+});
+
+test("a recently touched region and a region never set show no review badge", () => {
+	const el = mountOn("2026-11-06", STALE);
+	pick(el, "Right leg");
+	assert.equal(el.querySelector(".ci-review"), null);
+	pick(el, "Head");
+	assert.equal(el.querySelector(".ci-review"), null);
+});
+
+test("a non-default region that was never reviewed says so", () => {
+	const el = mountOn("2026-11-06", { regions: { head: { status: "wounded" } } });
+	pick(el, "Head");
+	assert.equal(text(el, ".ci-review-text"), "Review due. Never reviewed.");
+});

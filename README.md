@@ -39,6 +39,7 @@ rename: Left arm = Sword arm         # separate several with ;
 states: Healthy, Bruised, Wounded, Severe, Lost
 default: Healthy                     # the first state unless you say otherwise
 map: humanoid                        # body, humanoid or none
+review: 30                           # days before a changed region asks to be reviewed
 ```
 ````
 
@@ -52,6 +53,10 @@ map: humanoid                        # body, humanoid or none
 | body | 23 regions, 16 drawn | Dialed in, Maintaining, Needs work, Injured, Untracked |
 | character | head, torso, two arms, two legs | Healthy, Bruised, Wounded, Severe, Lost |
 | blank | none, chips only | Working, Worn, Failing, Broken, Unchecked |
+
+## Review reminders
+
+A region that is not in its default state asks to be looked at again once it has gone untouched for a while: 30 days unless the block says otherwise. Its chip gets a small ring, the header counts how many are due, and the card says how long it has been, with a **Mark reviewed** button. Any save counts as a review. Set the period with `review: 14` in the block, or turn it off with `review: 0`.
 
 ## Party
 

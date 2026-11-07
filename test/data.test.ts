@@ -2,6 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
 	applyEdit,
+	daysBetween,
+	isReviewDue,
+	lastTouched,
 	armorLooks,
 	applyInventory,
 	describeItem,
@@ -31,6 +34,7 @@ const profile: Profile = {
 	defaultState: "unknown",
 	regions: TEMPLATES.body.regions.slice(0, 4),
 	dataPath: "Character Info/Me.md",
+	reviewAfterDays: 30,
 };
 
 test("slug and uniqueId", () => {
@@ -255,4 +259,49 @@ test("an item's look is read and written, and only armor with a look is drawn", 
 		look: "gravethorn:helm",
 	});
 	assert.deepEqual((out.inventory as unknown[])[1], { name: "Vest", kind: "armor" });
+});
+
+test("every save stamps the review date, including a save that only marks it reviewed", () => {
+	const fm: Frontmatter = { regions: { head: { status: "hurt" } } };
+	applyEdit(fm, profile, "head", { note: "x" }, "2026-11-06");
+	assert.equal(readRegion(fm, "head").reviewed, "2026-11-06");
+	applyEdit(fm, profile, "head", { reviewed: true }, "2026-12-01");
+	assert.equal(readRegion(fm, "head").reviewed, "2026-12-01");
+	assert.equal(readRegion(fm, "head").note, "x");
+	assert.equal(readRegion({ regions: { head: { reviewed: "soon" } } }, "head").reviewed, null);
+});
+
+test("days between dates count whole days across months and years", () => {
+	assert.equal(daysBetween("2026-11-06", "2026-11-06"), 0);
+	assert.equal(daysBetween("2026-11-06", "2026-12-06"), 30);
+	assert.equal(daysBetween("2026-12-31", "2027-01-01"), 1);
+});
+
+test("the last touch is the later of the review date and the newest history entry", () => {
+	const data = readRegion(
+		{ regions: { a: { reviewed: "2026-10-01", history: [{ date: "2026-10-20", from: "ok", to: "hurt" }] } } },
+		"a",
+	);
+	assert.equal(lastTouched(data), "2026-10-20");
+	assert.equal(lastTouched(readRegion({}, "a")), null);
+});
+
+test("a review is due after more than the profile's days, never on the boundary day", () => {
+	const fm: Frontmatter = { regions: { head: { status: "hurt", reviewed: "2026-10-01" } } };
+	const data = readRegion(fm, "head");
+	assert.equal(isReviewDue(profile, data, "2026-10-31"), false);
+	assert.equal(isReviewDue(profile, data, "2026-11-01"), true);
+});
+
+test("a region in the default state is never due, and 0 days turns reviews off", () => {
+	const untracked = readRegion({ regions: { head: { reviewed: "2020-01-01" } } }, "head");
+	assert.equal(isReviewDue(profile, untracked, "2026-11-06"), false);
+	const hurt = readRegion({ regions: { head: { status: "hurt" } } }, "head");
+	assert.equal(isReviewDue(profile, hurt, "2026-11-06"), true);
+	assert.equal(isReviewDue({ ...profile, reviewAfterDays: 0 }, hurt, "2026-11-06"), false);
+});
+
+test("older saved profiles get the default review period", () => {
+	const { reviewAfterDays: _omit, ...old } = makeProfile("body", "Old", []);
+	assert.equal(normalizeSettings({ profiles: [old] }).profiles[0]?.reviewAfterDays, 30);
 });

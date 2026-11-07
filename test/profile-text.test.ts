@@ -283,3 +283,13 @@ test("a commented add line is left alone and the line order and comments survive
 test("a block with no profile line gets the add line at the top", () => {
 	assert.equal(addRegionLine("template: body", "Tail", null), "add: Tail\ntemplate: body");
 });
+
+test("a review line sets the days, 0 turns it off, and junk is a warning", () => {
+	assert.equal(resolve("profile: A\ntemplate: body").profile.reviewAfterDays, 30);
+	assert.equal(resolve("profile: A\ntemplate: body\nreview: 7").profile.reviewAfterDays, 7);
+	assert.equal(resolve("profile: A\ntemplate: body\nreview: 0").profile.reviewAfterDays, 0);
+	const { profile, warnings } = resolve("profile: A\ntemplate: body\nreview: soon");
+	assert.equal(profile.reviewAfterDays, 30);
+	assert.match(warnings.join(), /number of days/);
+	assert.match(newProfileBlock("A", "body", "full"), /# review: 30/);
+});

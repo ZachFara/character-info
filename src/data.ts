@@ -18,7 +18,7 @@ export const ITEM_KINDS: ItemKind[] = ["weapon", "armor", "gear"];
 const CLEARABLE = new Set<string>(["note", ...LIST_KEYS]);
 
 /** Local date as YYYY-MM-DD. */
-function today(d = new Date()): string {
+export function today(d = new Date()): string {
 	const p = (n: number): string => String(n).padStart(2, "0");
 	return `${String(d.getFullYear())}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
@@ -86,6 +86,7 @@ export function readRegion(fm: Frontmatter | undefined, regionId: string): Regio
 		fix: toList(r.fix),
 		links: toList(r.links),
 		history: toHistory(r.history),
+		reviewed: typeof r.reviewed === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.reviewed) ? r.reviewed : null,
 	};
 }
 
@@ -178,6 +179,8 @@ export function applyEdit(
 		const value = patch[key];
 		if (value !== undefined) next[key] = toList(value);
 	}
+	// Any save counts as a review.
+	next.reviewed = date;
 	const kept = Object.entries(next).filter(([key, value]) => !(CLEARABLE.has(key) && isEmpty(value)));
 	fm.regions = { ...regions, [regionId]: Object.fromEntries(kept) };
 	return fm;
@@ -218,7 +221,13 @@ function templateForMap(map: string): string {
 	return map === "humanoid" ? "character" : "blank";
 }
 
-type StoredProfile = Omit<Profile, "template"> & { template?: unknown };
+type StoredProfile = Omit<Profile, "template" | "reviewAfterDays"> & {
+	template?: unknown;
+	reviewAfterDays?: unknown;
+};
+
+/** Days before a changed region asks to be reviewed, for profiles that do not say. */
+export const DEFAULT_REVIEW_DAYS = 30;
 
 function isStoredProfile(v: unknown): v is StoredProfile {
 	const r = asRecord(v);
@@ -243,6 +252,10 @@ export function normalizeSettings(raw: unknown): PluginSettings {
 	const profiles = stored.map((p) => ({
 		...p,
 		template: typeof p.template === "string" ? p.template : templateForMap(p.map),
+		reviewAfterDays:
+			typeof p.reviewAfterDays === "number" && p.reviewAfterDays >= 0
+				? p.reviewAfterDays
+				: DEFAULT_REVIEW_DAYS,
 	}));
 	return {
 		profiles,
@@ -313,4 +326,30 @@ export function describeItem(item: Item): string {
 /** The looks of the armor that has a drawing, for the figure's armor view. */
 export function armorLooks(items: Item[]): string[] {
 	return items.flatMap((i) => (i.kind === "armor" && i.look !== null ? [i.look] : []));
+}
+
+/** Whole days from one YYYY-MM-DD date to another. */
+export function daysBetween(from: string, to: string): number {
+	const day = (s: string): number => {
+		const [y, m, d] = s.split("-").map(Number);
+		return Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1) / 86400000;
+	};
+	return Math.round(day(to) - day(from));
+}
+
+/** When the region was last touched: its review date or its latest history entry, whichever is later. */
+export function lastTouched(data: RegionData): string | null {
+	const dates = [data.reviewed, ...data.history.map((h) => h.date)].filter((d): d is string => d !== null);
+	return dates.sort().at(-1) ?? null;
+}
+
+/**
+ * Whether a region should ask to be reviewed: it is in a non-default state, review badges are on,
+ * and it has not been touched for more than the profile's number of days, or never.
+ */
+export function isReviewDue(profile: Profile, data: RegionData, on: string): boolean {
+	if (profile.reviewAfterDays <= 0) return false;
+	if (resolveState(profile, data.status).id === profile.defaultState) return false;
+	const last = lastTouched(data);
+	return last === null || daysBetween(last, on) > profile.reviewAfterDays;
 }

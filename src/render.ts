@@ -11,7 +11,7 @@ import {
 	tally,
 	toList,
 } from "./data.ts";
-import { drawStateButtons } from "./card-actions.ts";
+import { drawQuickAdd, drawStateButtons, type ListField } from "./card-actions.ts";
 import { drawInventory } from "./inventory-view.ts";
 import type { Frontmatter, Item, Profile, Region, RegionData, RegionPatch, State } from "./types.ts";
 
@@ -216,12 +216,36 @@ export class CharacterInfoView {
 		void MarkdownRenderer.render(this.o.app, text, target, this.o.sourcePath, this.o.component);
 	}
 
-	private drawList(card: HTMLElement, title: string, items: string[], cls: string): void {
+	/** A titled list. With `onRemove`, each item gets a cross that reports its position. */
+	private drawList(
+		card: HTMLElement,
+		title: string,
+		items: string[],
+		cls: string,
+		onRemove?: (index: number) => void,
+	): void {
 		if (!items.length) return;
 		const sec = card.createDiv({ cls: `ci-sec ${cls}` });
 		sec.createDiv({ cls: "ci-sec-title", text: title });
 		const ul = sec.createEl("ul");
-		for (const item of items) this.markdown(ul.createEl("li"), item);
+		items.forEach((item, index) => {
+			const li = ul.createEl("li");
+			this.markdown(li.createSpan({ cls: "ci-li-text" }), item);
+			if (!onRemove) return;
+			const x = li.createEl("button", {
+				cls: "ci-li-x",
+				text: "×",
+				attr: { "aria-label": `Remove ${item}` },
+			});
+			x.addEventListener("click", () => {
+				onRemove(index);
+			});
+		});
+	}
+
+	/** Saves a list for a region, replacing the one it had. */
+	private saveList(regionId: string, field: ListField, list: string[]): void {
+		void this.o.save(regionId, { [field]: list });
 	}
 
 	private drawCard(side: HTMLElement, fm: Frontmatter): void {
@@ -241,7 +265,7 @@ export class CharacterInfoView {
 		if (this.editing) this.drawEditor(card, region, data, state);
 		else {
 			this.drawQuickStates(card, region, state);
-			this.drawDetails(card, data, this.wornOn(region.id, fm));
+			this.drawDetails(card, region.id, data, this.wornOn(region.id, fm));
 		}
 	}
 
@@ -285,16 +309,30 @@ export class CharacterInfoView {
 		return itemsOnRegion(readInventory(fm), regionId).map(describeItem);
 	}
 
-	private drawDetails(card: HTMLElement, data: RegionData, worn: string[]): void {
+	private drawDetails(card: HTMLElement, regionId: string, data: RegionData, worn: string[]): void {
 		if (data.note) this.markdown(card.createDiv({ cls: "ci-note" }), data.note);
 		this.drawList(card, "Worn and held", worn, "worn");
-		this.drawList(card, "Doing", data.doing, "doing");
-		this.drawList(card, "To fix", data.fix, "fix");
-		this.drawList(card, "Notes", data.links, "links");
+		const lists: [ListField, string, string[]][] = [
+			["doing", "Doing", data.doing],
+			["fix", "To fix", data.fix],
+			["links", "Notes", data.links],
+		];
+		for (const [field, title, items] of lists) {
+			this.drawList(card, title, items, field, (index) => {
+				this.saveList(
+					regionId,
+					field,
+					items.filter((_, i) => i !== index),
+				);
+			});
+		}
 		this.drawHistory(card, data);
 		if (!data.note && !data.doing.length && !data.fix.length && !data.links.length && !worn.length) {
 			card.createDiv({ cls: "ci-empty", text: "Nothing logged yet." });
 		}
+		drawQuickAdd(card, this.o.app, (field, text) => {
+			this.saveList(regionId, field, [...data[field], text]);
+		});
 	}
 
 	private drawHistory(card: HTMLElement, data: RegionData): void {

@@ -1,4 +1,19 @@
 // Minimal stand-in for the parts of Obsidian's API that the renderer touches.
+/** Type-ahead on an input. The tests never open the popup, so this does nothing. */
+export class AbstractInputSuggest<T> {
+	protected app: unknown;
+	/** Unused. Keeps the type parameter in use. */
+	protected suggestions?: T[];
+
+	constructor(app: unknown, _input: HTMLInputElement) {
+		this.app = app;
+	}
+
+	close(): void {
+		// nothing to close in tests
+	}
+}
+
 export const MarkdownRenderer = {
 	render(_app: unknown, text: string, target: HTMLElement): Promise<void> {
 		target.textContent = text; // the real one renders markdown; the text is enough to assert on

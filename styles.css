@@ -480,3 +480,40 @@
 .ci-quick .ci-state {
 	padding: 2px var(--size-4-3);
 }
+
+/* Quick add row and the cross on list items. */
+.ci-quick-add {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-4);
+}
+.ci-quick-add input[type="text"] {
+	flex: 1 1 160px;
+	min-width: 0;
+}
+.ci-sec li {
+	display: flex;
+	align-items: baseline;
+	gap: var(--size-4-2);
+}
+.ci-li-text {
+	flex: 1;
+	min-width: 0;
+}
+.ci-li-text p {
+	margin: 0;
+}
+.ci-li-x {
+	flex: none;
+	visibility: hidden;
+	padding: 0 var(--size-4-2);
+	height: auto;
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-muted);
+}
+.ci-sec li:hover .ci-li-x,
+.ci-li-x:focus-visible {
+	visibility: visible;
+}

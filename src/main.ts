@@ -29,8 +29,9 @@ export default class CharacterInfoPlugin extends Plugin {
 			new CharacterInfoSettingTab(this.app, this, {
 				settings: this.settings,
 				save: () => this.saveSettings(),
-				createDataNote: async (profile) => {
-					await this.ensureDataFile(profile);
+				openDataNote: async (profile) => {
+					const file = await this.ensureDataFile(profile);
+					await this.app.workspace.getLeaf(false).openFile(file);
 				},
 			}),
 		);

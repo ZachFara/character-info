@@ -1,6 +1,6 @@
 // Turns the text of a character-info block into a profile. Pure logic, no Obsidian imports.
 import { slug, uniqueId } from "./data.ts";
-import { MAPS, TEMPLATES, getMap, makeProfile, type TemplateKey } from "./presets.ts";
+import { MAPS, STATE_SETS, TEMPLATES, getMap, makeProfile, type TemplateKey } from "./presets.ts";
 import type { Profile, Region, State } from "./types.ts";
 
 export type ResolveResult = { ok: true; profile: Profile; warnings: string[] } | { ok: false; error: string };
@@ -187,4 +187,32 @@ export function resolveDefinition(
 	applyRegions(profile, block, warnings);
 	const error = applyStates(profile, block, warnings);
 	return error === null ? { ok: true, profile, warnings } : { ok: false, error };
+}
+
+export type BlockMode = "simple" | "full";
+
+/**
+ * The text of a new block for a profile. The simple form is the name and a template. The full
+ * form lists every key, with the template's own values, and comment lines that explain them.
+ * Both resolve to exactly the template's profile until a line is changed.
+ */
+export function newProfileBlock(name: string, template: TemplateKey, mode: BlockMode): string {
+	const t = TEMPLATES[template];
+	const lines = [`profile: ${name}`, `template: ${template}`];
+	if (mode === "full") {
+		const set = STATE_SETS[t.stateSet];
+		const defaultLabel = set.states.find((s) => s.id === set.defaultState)?.label ?? "";
+		lines.push(
+			`map: ${t.map}`,
+			"# Regions. Add, remove or rename relative to the template.",
+			`# It has: ${t.regions.map((r) => r.name).join(", ") || "nothing yet"}`,
+			"add:",
+			"remove:",
+			"rename:",
+			"# States, best first. The first is the default. Add =#hex to a state to set its colour.",
+			`# states: ${set.states.map((s) => s.label).join(", ")}`,
+			`# default: ${defaultLabel}`,
+		);
+	}
+	return ["```character-info", ...lines, "```", ""].join("\n");
 }

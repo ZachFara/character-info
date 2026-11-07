@@ -19,7 +19,7 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T1. Try it in a real vault.** Done, results above.
 - [x] **T10a and T10b. Profile text, defined and registered by blocks.** Done: the parser and resolver, blocks that define and register profiles, references by name, and one-click create buttons for unknown names. Checked in real Obsidian.
 - [x] **T10c. Retire the settings profile editor.** Done: settings hold a default profile and a read-only list with Open data note and Forget. The old editor code is deleted.
-- [ ] **T10d. New profile commands.** Entry point: the command palette. Done when "New profile (simple)" asks for a name and a template and inserts a minimal block, and "New profile (full template)" inserts a block with every key present, the template's values filled in, and short `#` comment lines explaining each key. Tests check that parsing the full block gives back the template's profile exactly. Depends on T10a.
+- [x] **T10d. New profile commands.** Done: "New profile" and "New profile, full template" ask for a name and template and insert a block. A fresh block of either kind resolves to exactly its template, and the registry picks the profile up when the block renders. Checked in real Obsidian.
 - [ ] **T4. Party view and profiles overview.** Entry point: a block with `profiles: A, B` or `profiles: all`. Done when each profile shows a compact figure with its worst region, a tile opens that profile's full view and goes back, and `all` follows new profiles with no edit. The first created profile also creates `Character Info/Profiles.md` holding an `all` block, and a command opens it.
 - [ ] **T11a. One-click state change.** Entry point: the card. Done when a row of state buttons on the card changes the state and writes history without entering Edit.
 - [ ] **T11b. Quick add and remove.** Entry point: the card. Done when one add row (Doing, To fix, or Link) adds an item on Enter, link mode suggests notes and stores a wikilink, and each item can be removed.
@@ -41,7 +41,7 @@ Made to keep work moving. Each is cheap to change.
 - **Profiles are text in the block.** The block text defines a profile and settings only list them. See decision 0009. The older settings editor is retired in T10c.
 - **Inventory** is a global switch in settings, off by default. Items live in the profile's data note as `inventory:` entries with a name, a quantity and an optional region.
 - **Review badges** use a number of days per profile, default 30, 0 to turn off. Any save counts as a review.
-- **Minimum Obsidian version** moves to 1.4.10 when the note suggester is added.
+- **Minimum Obsidian version** is 1.5.1, the version that added the modal title the new-profile dialog uses.
 
 ## Open Questions
 
@@ -52,5 +52,5 @@ Made to keep work moving. Each is cheap to change.
 
 ## Next steps
 
-1. Build T10a, T10b, T10c, T10d, then T4.
+1. Build T4, then T11a.
 2. Work down the list.

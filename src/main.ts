@@ -7,7 +7,8 @@ import {
 	type MarkdownPostProcessorContext,
 } from "obsidian";
 import { applyEdit, normalizeSettings, parseBlock } from "./data.ts";
-import { isDefinition, resolveDefinition } from "./profile-text.ts";
+import { isDefinition, newProfileBlock, resolveDefinition, type BlockMode } from "./profile-text.ts";
+import { NewProfileModal } from "./new-profile.ts";
 import { makeProfile, type TemplateKey } from "./presets.ts";
 import { CharacterInfoView, drawCreatePrompt, drawNotice } from "./render.ts";
 import { CharacterInfoSettingTab } from "./settings.ts";
@@ -120,14 +121,21 @@ export default class CharacterInfoPlugin extends Plugin {
 	}
 
 	private addCommands(): void {
-		this.addCommand({
-			id: "insert-block",
-			name: "Insert block",
-			editorCallback: (editor) => {
-				const name = this.findProfile(null)?.name ?? "";
-				editor.replaceSelection("```character-info\nprofile: " + name + "\n```\n");
-			},
-		});
+		const modes: [BlockMode, string, string][] = [
+			["simple", "new-profile", "New profile"],
+			["full", "new-profile-full", "New profile, full template"],
+		];
+		for (const [mode, id, name] of modes) {
+			this.addCommand({
+				id,
+				name,
+				editorCallback: (editor) => {
+					new NewProfileModal(this.app, mode, (profileName, template) => {
+						editor.replaceSelection(newProfileBlock(profileName, template, mode));
+					}).open();
+				},
+			});
+		}
 		this.addCommand({
 			id: "open-data-note",
 			name: "Open the default profile data note",

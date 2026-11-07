@@ -17,6 +17,8 @@ template: character
 ```
 ````
 
+Easiest start: open the command palette in a note and run **Character Info: New profile**. It asks for a name and a template and inserts the block. **New profile, full template** inserts every key, with the template's values and short comment lines, so everything you can change is already in the text.
+
 Click a region, press **Edit**, pick a state, write a note, save. Your first save creates the profile's data note.
 
 A block with only `profile: Thorn` shows a profile that is defined elsewhere. A name that does not exist yet shows buttons to create it from a template, so a typo never creates a profile on its own.

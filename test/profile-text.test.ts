@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseBlock } from "../src/data.ts";
-import { isDefinition, resolveDefinition, type ResolveResult } from "../src/profile-text.ts";
+import { isDefinition, newProfileBlock, resolveDefinition, type ResolveResult } from "../src/profile-text.ts";
+import { TEMPLATES, makeProfile, type TemplateKey } from "../src/presets.ts";
 import type { Profile } from "../src/types.ts";
 
 function resolve(text: string, existing?: Profile): Extract<ResolveResult, { ok: true }> {
@@ -163,4 +164,60 @@ test("an existing registry entry lends its id and template, and the block stays 
 test("resolving the same text twice gives the same profile", () => {
 	const text = "profile: Thorn\ntemplate: character\nadd: Tail\nstates: A, B, C";
 	assert.deepEqual(resolve(text).profile, resolve(text, resolve(text).profile).profile);
+});
+
+/** The text between the fences of a generated block. */
+function inner(block: string): string {
+	const lines = block.split("\n");
+	assert.equal(lines[0], "```character-info");
+	assert.equal(lines.at(-2), "```");
+	return lines.slice(1, -2).join("\n");
+}
+
+const KEYS = Object.keys(TEMPLATES) as TemplateKey[];
+
+test("the simple block is a fenced block with the name and template", () => {
+	assert.equal(
+		newProfileBlock("Thorn", "character", "simple"),
+		"```character-info\nprofile: Thorn\ntemplate: character\n```\n",
+	);
+});
+
+test("the full block lists every key and explains each with a comment", () => {
+	const text = inner(newProfileBlock("Thorn", "character", "full"));
+	for (const key of [
+		"profile:",
+		"template:",
+		"map:",
+		"add:",
+		"remove:",
+		"rename:",
+		"# states:",
+		"# default:",
+	]) {
+		assert.ok(text.includes(key), `missing ${key}`);
+	}
+	assert.match(text, /# It has: Head, Torso, Right arm, Left arm, Right leg, Left leg/);
+	assert.match(text, /# states: Healthy, Bruised, Wounded, Maimed, Lost/);
+	assert.match(text, /# default: Healthy/);
+	assert.ok(text.split("\n").filter((l) => l.startsWith("#")).length >= 4);
+});
+
+for (const key of KEYS) {
+	for (const mode of ["simple", "full"] as const) {
+		test(`a new ${mode} block for the ${key} template gives back exactly that template`, () => {
+			const block = newProfileBlock("Pat", key, mode);
+			assert.equal(isDefinition(parseBlock(inner(block))), true);
+			assert.deepEqual(resolve(inner(block)).profile, makeProfile(key, "Pat", []));
+		});
+	}
+}
+
+test("uncommenting the states and default lines in a full block changes the profile as written", () => {
+	const text = inner(newProfileBlock("Thorn", "character", "full"))
+		.replace("# states: Healthy,", "states: Fine,")
+		.replace("# default: Healthy", "default: Fine");
+	const { profile } = resolve(text);
+	assert.equal(profile.states[0]?.label, "Fine");
+	assert.equal(profile.defaultState, "fine");
 });

@@ -249,3 +249,21 @@ export function parsePartyBlock(source: string): PartyBlock {
 	}
 	return party;
 }
+
+/**
+ * Adds a region name to a block's text by writing it into the `add:` line, creating that line
+ * after `profile:` when there is none. Pass `template` when the block only referred to a profile,
+ * so the block becomes a definition and keeps working.
+ */
+export function addRegionLine(source: string, name: string, template: string | null): string {
+	const lines = source.split("\n");
+	const at = lines.findIndex((l) => /^\s*add\s*:/i.test(l));
+	if (at >= 0) {
+		const current = (lines[at] ?? "").replace(/^\s*add\s*:\s*/i, "").trim();
+		lines[at] = current ? `add: ${current}, ${name}` : `add: ${name}`;
+	} else {
+		const profileAt = lines.findIndex((l) => /^\s*profile\s*:/i.test(l));
+		lines.splice(profileAt + 1, 0, ...(template ? [`template: ${template}`] : []), `add: ${name}`);
+	}
+	return lines.join("\n");
+}

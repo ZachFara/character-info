@@ -1,81 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Component } from "obsidian";
-import { loadModule } from "./harness.ts";
-import { STATE_SETS, TEMPLATES } from "../src/presets.ts";
-import type {
-	CharacterInfoView as ViewClass,
-	ViewOptions,
-	drawCreatePrompt as drawCreatePromptFn,
-	drawNotice as drawNoticeFn,
-} from "../src/render.ts";
+import { all, click, mod, mount, must, pick, profile, text } from "./view-helpers.ts";
 import type { TemplateKey } from "../src/presets.ts";
-import type { Frontmatter, Item, Profile, RegionPatch } from "../src/types.ts";
-
-const mod = await loadModule<{
-	CharacterInfoView: typeof ViewClass;
-	drawCreatePrompt: typeof drawCreatePromptFn;
-	drawNotice: typeof drawNoticeFn;
-}>("src/render.ts");
-
-function profile(key: keyof typeof TEMPLATES): Profile {
-	const t = TEMPLATES[key];
-	const set = STATE_SETS[t.stateSet];
-	return {
-		id: "p",
-		name: "Test",
-		template: key,
-		map: t.map,
-		states: set.states,
-		defaultState: set.defaultState,
-		regions: t.regions,
-		dataPath: "x.md",
-	};
-}
-
-function mount(
-	p: Profile,
-	fm: Frontmatter,
-	saved: [string, RegionPatch][] = [],
-	saveInventory: ViewOptions["saveInventory"] = null,
-): HTMLElement {
-	const el = document.body.appendChild(document.createElement("div"));
-	const opts: ViewOptions = {
-		app: {} as ViewOptions["app"],
-		el,
-		profile: p,
-		sourcePath: "x.md",
-		component: {} as Component,
-		getFrontmatter: () => fm,
-		save: (id, patch) => {
-			saved.push([id, patch]);
-			return Promise.resolve();
-		},
-		saveInventory,
-	};
-	new mod.CharacterInfoView(opts).draw();
-	return el;
-}
-
-/** The first match for a selector, failing the test if there is none. */
-function must(el: ParentNode, selector: string): HTMLElement {
-	const found = el.querySelector<HTMLElement>(selector);
-	assert.ok(found, `missing ${selector}`);
-	return found;
-}
-
-function text(el: ParentNode, selector: string): string {
-	return must(el, selector).textContent;
-}
-
-function click(el: HTMLElement | undefined): void {
-	assert.ok(el, "nothing to click");
-	el.click();
-}
-
-function all(el: ParentNode, selector: string): HTMLElement[] {
-	return [...el.querySelectorAll<HTMLElement>(selector)];
-}
+import type { ViewOptions } from "../src/render.ts";
+import type { Frontmatter, Profile, RegionPatch } from "../src/types.ts";
 
 test("body profile draws a shape per region that has one and a chip per region", () => {
 	const el = mount(profile("body"), {});
@@ -184,158 +113,6 @@ test("a notice replaces the block content with a message", () => {
 	assert.equal(el.textContent, "Unknown template");
 });
 
-const SWORD: Item = { name: "Longsword", kind: "weapon", qty: 1, note: "Steel", region: "armR" };
-const VEST: Item = { name: "[[Plate carrier]]", kind: "armor", qty: 1, note: "", region: null };
-const WATER: Item = { name: "Water", kind: "gear", qty: 3, note: "1 L bottles", region: null };
-
-function mountInventory(items: Item[]): { el: HTMLElement; writes: Item[][] } {
-	const writes: Item[][] = [];
-	const fm: Frontmatter = { inventory: items.map((i) => ({ ...i })) };
-	const el = mount(profile("character"), fm, [], (next) => {
-		writes.push(next);
-		return Promise.resolve();
-	});
-	return { el, writes };
-}
-
-test("the inventory panel is hidden when the feature is off", () => {
-	assert.equal(mount(profile("character"), { inventory: [SWORD] }).querySelector(".ci-inventory"), null);
-});
-
-test("an empty inventory says so and offers a way to add", () => {
-	const { el } = mountInventory([]);
-	assert.match(text(el, ".ci-inv-count"), /0 items/);
-	assert.match(text(el, ".ci-inventory .ci-empty"), /Nothing carried yet/);
-	assert.ok(el.querySelector(".ci-item-add input"));
-});
-
-test("items are grouped by kind with their quantity, note and region", () => {
-	const { el } = mountInventory([WATER, SWORD, VEST]);
-	assert.deepEqual(
-		all(el, ".ci-inv-group .ci-sec-title").map((t) => t.textContent),
-		["Weapons", "Armor", "Gear"],
-	);
-	const [sword] = all(el, ".ci-inv-group.weapon .ci-item");
-	assert.ok(sword);
-	assert.equal(text(sword, ".ci-item-name"), "Longsword");
-	assert.equal(text(sword, ".ci-item-note"), "Steel");
-	assert.equal(text(sword, ".ci-item-region"), "Right arm");
-	assert.equal(text(must(el, ".ci-inv-group.gear"), ".ci-item-n"), "3");
-	assert.equal(text(must(el, ".ci-inv-group.armor"), ".ci-item-name"), "[[Plate carrier]]");
-});
-
-test("the quantity buttons change the count and cannot go below one", () => {
-	const { el, writes } = mountInventory([WATER, SWORD]);
-	const gear = must(el, ".ci-inv-group.gear");
-	const [minus, plus] = all(gear, ".ci-item-qty button");
-	assert.ok(minus && plus);
-	plus.click();
-	minus.click();
-	assert.deepEqual(
-		writes.map((w) => w.find((i) => i.name === "Water")?.qty),
-		[4, 2],
-	);
-	const sword = all(el, ".ci-inv-group.weapon .ci-item-qty button")[0];
-	assert.ok(sword);
-	assert.equal((sword as HTMLButtonElement).disabled, true);
-});
-
-test("removing an item writes the list without it", () => {
-	const { el, writes } = mountInventory([WATER, SWORD]);
-	must(must(el, ".ci-inv-group.weapon"), ".ci-item > .ci-inv-btn").click();
-	assert.deepEqual(
-		writes[0]?.map((i) => i.name),
-		["Water"],
-	);
-});
-
-test("adding an item uses the chosen name, note, kind and region", () => {
-	const { el, writes } = mountInventory([WATER]);
-	const [name, note] = all(el, ".ci-item-add input");
-	const [kind, region] = all(el, ".ci-item-add select");
-	assert.ok(name && note && kind && region);
-	(name as HTMLInputElement).value = "  Kite shield ";
-	(note as HTMLInputElement).value = "Painted";
-	(kind as HTMLSelectElement).value = "armor";
-	(region as HTMLSelectElement).value = "armL";
-	must(el, ".ci-item-add .mod-cta").click();
-	const [written] = writes;
-	assert.ok(written);
-	assert.equal(written.length, 2);
-	assert.deepEqual(written.at(-1), {
-		name: "Kite shield",
-		kind: "armor",
-		qty: 1,
-		note: "Painted",
-		region: "armL",
-	});
-});
-
-test("an empty name adds nothing", () => {
-	const { el, writes } = mountInventory([]);
-	must(el, ".ci-item-add .mod-cta").click();
-	assert.equal(writes.length, 0);
-});
-
-test("pressing Enter in the name box adds the item as carried gear by default", () => {
-	const { el, writes } = mountInventory([]);
-	const name = must(el, ".ci-item-add input") as HTMLInputElement;
-	name.value = "Rope";
-	name.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-	const [written] = writes;
-	assert.ok(written);
-	assert.deepEqual(written[0], { name: "Rope", kind: "gear", qty: 1, note: "", region: null });
-});
-
-function pick(el: HTMLElement, region: string): void {
-	const chip = all(el, ".ci-chip").find((c) => c.textContent === region);
-	assert.ok(chip, `no chip ${region}`);
-	chip.click();
-}
-
-test("the card for a region lists what is worn or held there when the inventory is on", () => {
-	const { el } = mountInventory([SWORD, WATER, VEST]);
-	pick(el, "Right arm");
-	assert.equal(text(el, ".ci-sec.worn .ci-sec-title"), "Worn and held");
-	assert.equal(text(el, ".ci-sec.worn li"), "Longsword · Steel");
-	assert.equal(el.querySelector(".ci-empty"), null);
-});
-
-test("a region with nothing on it has no worn section, and the inventory being off hides it", () => {
-	const { el } = mountInventory([SWORD]);
-	pick(el, "Left leg");
-	assert.equal(el.querySelector(".ci-sec.worn"), null);
-	const off = mount(profile("character"), { inventory: [SWORD] });
-	pick(off, "Right arm");
-	assert.equal(off.querySelector(".ci-sec.worn"), null);
-});
-
-test("the kit row offers every kit and adds the chosen one placed on the profile's regions", () => {
-	const { el, writes } = mountInventory([WATER]);
-	const pickKit = must(el, ".ci-kit-row select") as HTMLSelectElement;
-	assert.deepEqual(
-		[...pickKit.options].map((o) => o.value),
-		["soldier", "knight", "gravethorn"],
-	);
-	pickKit.value = "knight";
-	must(el, ".ci-kit-row button").click();
-	const [written] = writes;
-	assert.ok(written);
-	assert.equal(written[0]?.name, "Water");
-	assert.equal(written.find((i) => i.name === "Longsword")?.region, "armR");
-	assert.equal(written.find((i) => i.name === "Left greave")?.region, "legL");
-});
-
-test("adding a kit skips pieces that are already in the inventory", () => {
-	const kit: Item[] = [{ name: "Longsword", kind: "weapon", qty: 1, note: "", region: "armR" }];
-	const { el, writes } = mountInventory(kit);
-	const pickKit = must(el, ".ci-kit-row select") as HTMLSelectElement;
-	pickKit.value = "knight";
-	must(el, ".ci-kit-row button").click();
-	assert.equal(writes.length, 1);
-	assert.equal(writes[0]?.length, 13);
-});
-
 test("the card has a row of state buttons that change the state in one click", () => {
 	const saved: [string, RegionPatch][] = [];
 	const el = mount(profile("character"), { regions: { armL: { status: "lost" } } }, saved);
@@ -411,4 +188,50 @@ test("an empty quick add saves nothing", () => {
 	pick(el, "Head");
 	click(must(el, ".ci-quick-add button"));
 	assert.equal(saved.length, 0);
+});
+
+test("a plus chip appears only when the block can be edited, and Enter adds the typed region", () => {
+	const added: string[] = [];
+	const el = document.body.appendChild(document.createElement("div"));
+	new mod.CharacterInfoView({
+		app: {} as ViewOptions["app"],
+		el,
+		profile: profile("character"),
+		sourcePath: "x.md",
+		component: {} as Component,
+		getFrontmatter: () => ({}),
+		save: () => Promise.resolve(),
+		saveInventory: null,
+		addRegion: (name) => added.push(name),
+	}).draw();
+	click(must(el, ".ci-chip-add"));
+	const input = must(el, ".ci-add-region") as HTMLInputElement;
+	assert.equal(el.querySelector(".ci-chip-add"), null);
+	input.value = "  Tail ";
+	input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+	assert.deepEqual(added, ["Tail"]);
+	assert.equal(mount(profile("character"), {}).querySelector(".ci-chip-add"), null);
+});
+
+test("Escape puts the plus chip back and an empty box adds nothing", () => {
+	const added: string[] = [];
+	const el = document.body.appendChild(document.createElement("div"));
+	new mod.CharacterInfoView({
+		app: {} as ViewOptions["app"],
+		el,
+		profile: profile("character"),
+		sourcePath: "x.md",
+		component: {} as Component,
+		getFrontmatter: () => ({}),
+		save: () => Promise.resolve(),
+		saveInventory: null,
+		addRegion: (name) => added.push(name),
+	}).draw();
+	click(must(el, ".ci-chip-add"));
+	const input = must(el, ".ci-add-region") as HTMLInputElement;
+	input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+	assert.equal(added.length, 0);
+	input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+	assert.ok(el.querySelector(".ci-chip-add"));
+	assert.equal(el.querySelector(".ci-add-region"), null);
 });

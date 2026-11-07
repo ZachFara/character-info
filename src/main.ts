@@ -7,7 +7,14 @@ import {
 	type MarkdownPostProcessorContext,
 } from "obsidian";
 import { applyEdit, normalizeSettings, parseBlock } from "./data.ts";
-import { isDefinition, newProfileBlock, resolveDefinition, type BlockMode } from "./profile-text.ts";
+import {
+	isDefinition,
+	newProfileBlock,
+	parsePartyBlock,
+	resolveDefinition,
+	type BlockMode,
+} from "./profile-text.ts";
+import { PartyView, type PartyMember } from "./party.ts";
 import { NewProfileModal } from "./new-profile.ts";
 import { makeProfile, type TemplateKey } from "./presets.ts";
 import { CharacterInfoView, drawCreatePrompt, drawNotice } from "./render.ts";
@@ -23,13 +30,18 @@ interface Mounted {
 export default class CharacterInfoPlugin extends Plugin {
 	/** Edited in place, never reassigned, because the settings tab holds a reference. */
 	settings: PluginSettings = { profiles: [], defaultProfile: "" };
+	/** Party blocks listen here so a profile added or forgotten anywhere updates them. */
+	private readonly registryListeners = new Set<() => void>();
 
 	override async onload(): Promise<void> {
 		await this.loadSettings();
 		this.addSettingTab(
 			new CharacterInfoSettingTab(this.app, this, {
 				settings: this.settings,
-				save: () => this.saveSettings(),
+				save: async () => {
+					await this.saveSettings();
+					this.notifyRegistry();
+				},
 				openDataNote: async (profile) => {
 					const file = await this.ensureDataFile(profile);
 					await this.app.workspace.getLeaf(false).openFile(file);
@@ -39,7 +51,54 @@ export default class CharacterInfoPlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor("character-info", (source, el, ctx) => {
 			this.mountBlock(source, el, ctx);
 		});
+		this.registerMarkdownCodeBlockProcessor("character-party", (source, el, ctx) => {
+			this.mountParty(source, el, ctx);
+		});
 		this.addCommands();
+	}
+
+	private notifyRegistry(): void {
+		for (const listener of this.registryListeners) listener();
+	}
+
+	/** Draws a party block. It rebuilds when the registry changes and redraws when a member's data does. */
+	private mountParty(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void {
+		const child = new MarkdownRenderChild(el);
+		ctx.addChild(child);
+		const block = parsePartyBlock(source);
+		let members: PartyMember[] = [];
+		let view: PartyView | null = null;
+		const build = (): void => {
+			members = this.partyMembers(block.names, block.all);
+			view = new PartyView({
+				app: this.app,
+				el,
+				title: block.title,
+				members,
+				sourcePath: ctx.sourcePath,
+				component: child,
+				getFrontmatter: (profile) => this.frontmatterFor(profile),
+				save: (profile, regionId, patch) => this.saveRegion(profile, regionId, patch),
+			});
+			view.draw();
+		};
+		build();
+		this.registryListeners.add(build);
+		child.register(() => this.registryListeners.delete(build));
+		child.registerEvent(
+			this.app.metadataCache.on("changed", (file) => {
+				const shown = members.some((m) => "profile" in m && normalizePath(m.profile.dataPath) === file.path);
+				if (shown) view?.refresh();
+			}),
+		);
+	}
+
+	private partyMembers(names: string[], all: boolean): PartyMember[] {
+		if (all) return this.settings.profiles.map((profile) => ({ profile }));
+		return names.map((name) => {
+			const profile = this.findProfile(name, true);
+			return profile ? { profile } : { missing: name };
+		});
 	}
 
 	/** Draws a block, and again whenever the profile note it shows changes or a profile is created. */
@@ -121,6 +180,13 @@ export default class CharacterInfoPlugin extends Plugin {
 	}
 
 	private addCommands(): void {
+		this.addCommand({
+			id: "new-party",
+			name: "New party",
+			editorCallback: (editor) => {
+				editor.replaceSelection("```character-party\ntitle: Party\nall\n```\n");
+			},
+		});
 		const modes: [BlockMode, string, string][] = [
 			["simple", "new-profile", "New profile"],
 			["full", "new-profile-full", "New profile, full template"],
@@ -175,7 +241,9 @@ export default class CharacterInfoPlugin extends Plugin {
 		if (at >= 0) list[at] = profile;
 		else list.push(profile);
 		if (!this.settings.defaultProfile) this.settings.defaultProfile = profile.id;
-		void this.saveSettings();
+		void this.saveSettings().then(() => {
+			this.notifyRegistry();
+		});
 	}
 
 	private createProfile(name: string, template: TemplateKey): void {

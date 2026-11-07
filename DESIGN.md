@@ -24,8 +24,9 @@ Character Info is an Obsidian plugin that shows anything made of parts as a clic
 Everything the plugin adds is reached through one of these.
 
 1. A `character-info` code block. Its text defines the profile: `profile`, `template`, `add`, `remove`, `rename`, `states`, `default` and `map`. A block with only `profile` refers to a defined one, and an unknown name offers buttons to create it.
-2. The settings tab: default profile, add a profile from a template, edit name, data note path, map, states and regions, duplicate, delete.
-3. Command "Insert block", which writes a code block for the default profile.
+2. A `character-party` code block: an optional `title:` line and profile names, or `all`. It shows each profile as a tile and opens one in full.
+3. The settings tab: default profile, add a profile from a template, edit name, data note path, map, states and regions, duplicate, delete.
+4. Command "Insert block", which writes a code block for the default profile.
 4. Command "Open the default profile data note".
 
 ## Data format

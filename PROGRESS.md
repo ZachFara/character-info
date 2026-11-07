@@ -20,15 +20,16 @@ Small tasks, one session each, in dependency order. Each starts at a user-facing
 - [x] **T10a and T10b. Profile text, defined and registered by blocks.** Done: the parser and resolver, blocks that define and register profiles, references by name, and one-click create buttons for unknown names. Checked in real Obsidian.
 - [x] **T10c. Retire the settings profile editor.** Done: settings hold a default profile and a read-only list with Open data note and Forget. The old editor code is deleted.
 - [x] **T10d. New profile commands.** Done: "New profile" and "New profile, full template" ask for a name and template and insert a block. A fresh block of either kind resolves to exactly its template, and the registry picks the profile up when the block renders. Checked in real Obsidian.
-- [ ] **T4. Party view and profiles overview.** Entry point: a block with `profiles: A, B` or `profiles: all`. Done when each profile shows a compact figure with its worst region, a tile opens that profile's full view and goes back, and `all` follows new profiles with no edit. The first created profile also creates `Character Info/Profiles.md` holding an `all` block, and a command opens it.
+- [x] **T4. Party view.** Done as its own block, `character-party`, with a title, names or `all`, tiles with a mini figure, the worst region and problem counts, and click to open a profile in full with a way back. A command inserts a party block. Checked in real Obsidian.
 - [ ] **T11a. One-click state change.** Entry point: the card. Done when a row of state buttons on the card changes the state and writes history without entering Edit.
 - [ ] **T11b. Quick add and remove.** Entry point: the card. Done when one add row (Doing, To fix, or Link) adds an item on Enter, link mode suggests notes and stores a wikilink, and each item can be removed.
 - [ ] **T11c. Add a region from the card.** Entry point: the roster. Done when a plus chip adds a region by name without opening settings.
 - [ ] **T3. Review badges.** Entry point: the card. Done when a region in a non-default state that has not been touched for the profile's number of days shows a badge and a Mark reviewed button, and the boundary day is tested.
 - [ ] **T5. Hit roll and damage.** Entry point: the figure. Done when a roll button picks a region by weight and selects it, Worsen and Heal buttons step the state, and both are tested with a seeded roll.
 - [ ] **T6a. Inventory switch.** Entry point: a settings toggle, off by default. Done when it shows or hides an inventory section and nothing else changes.
-- [ ] **T6b. Inventory items.** Done when items (name, quantity) can be added, changed and removed, with note links, stored in the data note.
-- [ ] **T6c. Inventory on regions.** Done when an item can be tied to a region and shows on that region's card.
+- [ ] **T6b. Inventory items.** Done when items with a name, a kind (weapon, armor or gear), a quantity and an optional note can be added, changed and removed, grouped by kind, with note links, stored in the data note.
+- [ ] **T6c. Worn and wielded.** Done when an item can be tied to a region, such as armor on the torso or a weapon in a hand, and it shows on that region's card.
+- [ ] **T6d. Starter kits.** Done when a kit dropdown adds a ready-made set of weapons and armor, placed on the regions the profile has. Kits: a modern soldier loadout, a medieval knight, and an original dark fantasy warplate in the same spirit as well-known black demonic plate, with its own name and design and none of the protected names. Needs a decision record on the naming rule.
 - [ ] **T7. Custom SVG maps.** Entry point: settings. Done when a vault SVG can be chosen, shapes with an id become regions, the SVG is sanitized, and a block can use it.
 - [ ] **T9. Real-Obsidian check script.** Done when a committed script starts an isolated Obsidian with the test vault and returns screenshots and results, and a decision record covers it.
 - [ ] **T8. Release prep.** Done when a tag builds `main.js`, `manifest.json` and `styles.css` in CI, the README has screenshots, and the community plugin checklist is satisfied.
@@ -52,5 +53,5 @@ Made to keep work moving. Each is cheap to change.
 
 ## Next steps
 
-1. Build T4, then T11a.
+1. Build T6a to T6d, then T11a.
 2. Work down the list.

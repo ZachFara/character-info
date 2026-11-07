@@ -9,6 +9,7 @@ import {
 	readRegion,
 	resolveState,
 	slug,
+	summarizeProfile,
 	tally,
 	toList,
 	uniqueId,
@@ -130,4 +131,33 @@ test("makeProfile gives each profile its own copy and a unique id", () => {
 test("getMap falls back to no map for an unknown key", () => {
 	assert.equal(getMap("nonsense").label, "No map (chips only)");
 	assert.equal(Object.keys(getMap("body").shapes).length, 16);
+});
+
+test("a summary counts the problem states in order and names the worst region", () => {
+	const fm: Frontmatter = {
+		regions: {
+			head: { status: "watch" },
+			neck: { status: "hurt" },
+			knees: { status: "watch" },
+			hips: { status: "ok" },
+		},
+	};
+	const full: Profile = { ...profile, regions: TEMPLATES.body.regions };
+	const s = summarizeProfile(full, fm);
+	assert.deepEqual(
+		s.problems.map((p) => [p.state.id, p.count]),
+		[
+			["ok", 1],
+			["watch", 2],
+			["hurt", 1],
+		],
+	);
+	assert.ok(s.worst);
+	assert.equal(s.worst.region.id, "neck");
+	assert.equal(s.worst.state.id, "hurt");
+});
+
+test("a summary of an all-default profile has no problems and no worst region", () => {
+	const s = summarizeProfile(profile, {});
+	assert.deepEqual(s, { problems: [], worst: null });
 });

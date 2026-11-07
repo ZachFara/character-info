@@ -51,6 +51,24 @@ map: humanoid                        # body, humanoid or none
 | character | head, torso, two arms, two legs | Healthy, Bruised, Wounded, Maimed, Lost |
 | blank | none, chips only | Working, Worn, Failing, Broken, Unchecked |
 
+## Party
+
+Show several profiles side by side, which is handy for tabletop. Use a different block:
+
+````
+```character-party
+title: The Company
+Thorn
+Mira
+Kestrel
+```
+````
+
+- One name per line, or separated by commas. `all` shows every profile and follows new ones as you create them. **New party** in the command palette inserts an `all` block.
+- Each tile has a small figure, the worst region, and a count of each problem state.
+- Click a tile to open that profile in full, edit it, and use **Back** to return.
+- A name with no profile gets a dashed tile that says so.
+
 ## Where the data lives
 
 One note per profile, by default `Character Info/<Profile>.md`:
